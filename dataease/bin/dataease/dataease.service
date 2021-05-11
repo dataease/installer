@@ -1,0 +1,43 @@
+#!/bin/bash
+# chkconfig: 2345 10 90
+# description: DATAEASE service
+
+function startDATAEASE
+{
+    f2cctl reload
+}
+
+function stopDATAEASE
+{
+    f2cctl uninstall
+}
+
+function restartDATAEASE
+{
+    stopDATAEASE
+    startDATAEASE
+}
+
+function statusDATAEASE
+{
+    f2cctl status
+}
+
+export HOSTNAME=$HOSTNAME
+case "$1" in
+        start)
+                startDATAEASE
+                ;;
+        stop)
+                stopDATAEASE
+                ;;
+        restart)
+                restartDATAEASE
+                ;;
+        status)
+                statusDATAEASE
+                ;;
+        *)
+                echo "Usage: $0 {start|stop|restart|status}"
+                ;;
+esac

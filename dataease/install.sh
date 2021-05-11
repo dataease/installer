@@ -1,0 +1,151 @@
+#!/bin/bash
+CURRENT_DIR=$(
+   cd "$(dirname "$0")"
+   pwd
+)
+os=`uname -a`
+function log() {
+   message="[DATAEASE Log]: $1 "
+   echo -e "${message}" 2>&1 | tee -a ${CURRENT_DIR}/install.log
+}
+
+args=$@
+
+docker_config_folder="/etc/docker"
+
+compose_files="-f docker-compose.yml"
+
+DE_RUN_BASE=/opt/dataease
+
+mkdir -p ${DE_RUN_BASE}
+cp -r ./dataease/* ${DE_RUN_BASE}/
+
+conf_folder=${DE_RUN_BASE}/conf
+mkdir -p $conf_folder
+templates_folder=${DE_RUN_BASE}/templates
+cp -r $templates_folder/* $conf_folder
+cd $templates_folder
+
+conf_template_files=( dataease.properties be.conf de.conf)
+for i in ${conf_template_files[@]}; do
+   if [ -f $i ]; then
+      envsubst < $i > $conf_folder/$i
+   fi
+done
+
+envsubst < ${CURRENT_DIR}/dataease/bin/mysql/init.sql > ${DE_RUN_BASE}/bin/mysql/init.sql
+
+cd ${CURRENT_DIR}
+mkdir -p ${DE_RUN_BASE}/data/mysql
+mkdir -p ${DE_RUN_BASE}/data/kettle
+mkdir -p ${DE_RUN_BASE}/data/fe
+mkdir -p ${DE_RUN_BASE}/data/be
+mkdir -p ${DE_RUN_BASE}/data/mysql
+
+
+cp dectl /usr/local/bin && chmod +x /usr/local/bin/dectl
+ln -s /usr/local/bin/dectl /usr/bin/dectl 2>/dev/null
+
+echo -e "======================= 开始安装 =======================" 2>&1 | tee -a ${CURRENT_DIR}/install.log
+
+echo "time: $(date)"
+
+#Install docker & docker-compose
+##Install Latest Stable Docker Release
+if which docker >/dev/null; then
+   log "检测到 Docker 已安装，跳过安装步骤"
+   log "启动 Docker "
+   service docker start 2>&1 | tee -a ${CURRENT_DIR}/install.log
+else
+   if [[ -d docker ]]; then
+      log "... 离线安装 docker"
+      cp docker/bin/* /usr/bin/
+      cp docker/service/docker.service /etc/systemd/system/
+      chmod +x /usr/bin/docker*
+      chmod 754 /etc/systemd/system/docker.service
+      log "... 启动 docker"
+      service docker start 2>&1 | tee -a ${CURRENT_DIR}/install.log
+
+   else
+      log "... 在线安装 docker"
+      curl -fsSL https://get.docker.com -o get-docker.sh 2>&1 | tee -a ${CURRENT_DIR}/install.log
+      sudo sh get-docker.sh 2>&1 | tee -a ${CURRENT_DIR}/install.log
+      log "... 启动 docker"
+      service docker start 2>&1 | tee -a ${CURRENT_DIR}/install.log
+   fi
+
+   if [ ! -d "$docker_config_folder" ];then
+      mkdir -p "$docker_config_folder"
+   fi
+
+##Install Latest Stable Docker Compose Release
+if which docker-compose >/dev/null; then
+   log "检测到 Docker Compose 已安装，跳过安装步骤"
+else
+   if [[ -d docker ]]; then
+      log "... 离线安装 docker-compose"
+      cp docker/bin/docker-compose /usr/bin/
+      chmod +x /usr/bin/docker-compose
+   else
+      log "... 在线安装 docker-compose"
+      COMPOSEVERSION=$(curl -s https://github.com/docker/compose/releases/latest/download 2>&1 | grep -Po [0-9]+\.[0-9]+\.[0-9]+)
+      curl -L "https://github.com/docker/compose/releases/download/$COMPOSEVERSION/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose 2>&1 | tee -a ${CURRENT_DIR}/install.log
+      chmod +x /usr/local/bin/docker-compose
+      ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose
+   fi
+fi
+
+cd ${DE_RUN_BASE}
+
+export COMPOSE_HTTP_TIMEOUT=180
+cd ${CURRENT_DIR}
+# 加载镜像
+if [[ -d images ]]; then
+   log "加载镜像"
+   for i in $(ls images); do
+      docker load -i images/$i 2>&1 | tee -a ${CURRENT_DIR}/install.log
+   done
+else
+   log "拉取镜像"
+   cd ${DE_RUN_BASE} && docker-compose $compose_files pull 2>&1 | tee -a ${CURRENT_DIR}/install.log
+   cd -
+fi
+
+log "配置 dataease Service"
+\cp ${DE_RUN_BASE}/bin/dataease/dataease.service /etc/init.d/dataease
+chmod a+x /etc/init.d/dataease
+chkconfig --add dataease
+dataeaseService=`grep "service dataease start" /etc/rc.d/rc.local | wc -l`
+if [ "$dataeaseService" -eq 0 ]; then
+   echo "sleep 10" >> /etc/rc.d/rc.local
+   echo "service dataease start" >> /etc/rc.d/rc.local
+fi
+chmod +x /etc/rc.d/rc.local
+if [ `grep "vm.max_map_count" /etc/sysctl.conf | wc -l` -eq 0 ];then
+   sysctl -w vm.max_map_count=262144
+   echo "vm.max_map_count=262144" >> /etc/sysctl.conf
+fi
+
+if [ `grep "net.ipv4.ip_forward" /etc/sysctl.conf | wc -l` -eq 0 ];then
+   sysctl -w net.ipv4.ip_forward=1
+   echo "net.ipv4.ip_forward=1" >> /etc/sysctl.conf
+else
+   sed -i '/net.ipv4.ip_forward/ s/\(.*= \).*/\11/' /etc/sysctl.conf
+fi
+
+if which firewall-cmd >/dev/null; then
+   log "防火墙端口开放"
+   firewall-cmd --zone=public --add-port=80/tcp --permanent
+   firewall-cmd --zone=public --add-port=6600-6620/tcp --permanent
+   firewall-cmd --reload
+fi
+
+
+log "启动服务"
+cd ${DE_RUN_BASE} && docker-compose $compose_files up -d 2>&1 | tee -a ${CURRENT_DIR}/install.log
+
+dectl status 2>&1 | tee -a ${CURRENT_DIR}/install.log
+
+echo -e "======================= 安装完成 =======================\n" 2>&1 | tee -a ${CURRENT_DIR}/install.log
+echo -e "请通过以下方式访问:\n URL: http://\$LOCAL_IP\n 用户名: admin\n 初始密码: dataease" 2>&1 | tee -a ${CURRENT_DIR}/install.log
+echo -e "您可以使用命令 'dectl status' 检查服务运行情况.\n" 2>&1 | tee -a ${CURRENT_DIR}/install.log-a ${CURRENT_DIR}/install.log

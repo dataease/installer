@@ -1,0 +1,90 @@
+#!/bin/bash
+action=$1
+target=$2
+args=$@
+
+DE_BASE=/opt/
+export COMPOSE_HTTP_TIMEOUT=180
+
+compose_files="-f docker-compose.yml"
+
+function usage() {
+   echo "DATAEASE 控制脚本"
+   echo
+   echo "Usage: "
+   echo "  ./dectl [COMMAND] [ARGS...]"
+   echo "  ./dectl --help"
+   echo
+   echo "Commands: "
+   echo "  status    查看 DATAEASE 服务运行状态"
+   echo "  start     启动 DATAEASE 服务"
+   echo "  stop      停止 DATAEASE 服务"
+   echo "  restart   重启 DATAEASE 服务"
+   echo "  reload    重新加载 DATAEASE 服务"
+   echo "  uninstall 卸载 DATAEASE 服务"
+   echo "  version   查看 DATAEASE 版本信息"
+}
+
+function status() {
+   echo
+   cd ${DE_BASE}/dataease; docker-compose ${compose_files} ps
+}
+function start() {
+   echo
+   cd ${DE_BASE}/dataease; docker-compose ${compose_files} start ${target}
+}
+function stop() {
+   echo
+   cd ${DE_BASE}/dataease; docker-compose ${compose_files} stop ${target}
+}
+function restart() {
+   echo
+   cd ${DE_BASE}/dataease; docker-compose ${compose_files} restart ${target}
+}
+function reload() {
+   echo
+   cd ${DE_BASE}/dataease; docker-compose ${compose_files} up -d
+}
+function uninstall() {
+   echo
+   cd ${DE_BASE}/dataease; docker-compose ${compose_files} ${module_compose_files} down -v ${target}
+}
+function version() {
+   echo
+   cat ${DE_BASE}/dataease/conf/version
+}
+
+function main() {
+    case "${action}" in
+      status)
+         status
+         ;;
+      start)
+         start
+         ;;
+      stop)
+         stop
+         ;;
+      restart)
+         restart
+         ;;
+      reload)
+         reload
+         ;;
+      uninstall)
+         uninstall
+         ;;
+      version)
+         version
+         ;;
+      help)
+         usage
+         ;;
+      --help)
+         usage
+         ;;
+      *)
+         echo "不支持的参数，请使用 help 或 --help 参数获取帮助"
+    esac
+}
+main
