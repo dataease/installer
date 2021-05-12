@@ -25,6 +25,8 @@ services:
       interval: 5s
       timeout: 3s
       retries: 10
+    env_file:
+      - ./conf/mysql.env
     ports:
       - 3306:3306
     volumes:
