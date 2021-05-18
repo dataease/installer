@@ -4,54 +4,52 @@ MYSQL_SCHEMA=dataease
 MYSQL_USER=root
 MYSQL_PASSWD=Password123@mysql
 
-read -p "Use the use full function mode: (y/n)"  full_mode
-
-if [[ -z "${full_mode}" || "${full_mode}" == "y"  ]];then
- full_mode=y
-else
- full_mode=n
-fi
-
-read -p "Use the built in database, external database supports MySQL only: (y/n)"  build_in_database
-
-if [[ -z "${build_in_database}" || "${build_in_database}" == "y"  ]];then
- build_in_database=y
-else
- build_in_database=n
-fi
-
-if [[ "${build_in_database}" == "n"   ]];then
-  read -p "Mysql database address: "  MYSQL_HOST
-  read -p "Mysql database schema: "  MYSQL_SCHEMA
-  read -p "Mysql database user: "  MYSQL_USER
-  read -p "Mysql database password: "  MYSQL_PASSWD
-fi
-
+DE_RUN_BASE=/opt/dataease
 
 CURRENT_DIR=$(
    cd "$(dirname "$0")"
    pwd
 )
 
+args=$@
 os=`uname -a`
+docker_config_folder="/etc/docker"
+compose_files="-f docker-compose.yml"
+conf_folder=${DE_RUN_BASE}/conf
+templates_folder=${DE_RUN_BASE}/templates
+
+read -p "是否进行精简模式安装: (y/n)y"  basic_mode
+
+if [[ -z "${basic_mode}" || "${basic_mode}" == "y" ]];then
+ basic_mode='y'
+else
+ basic_mode='n'
+fi
+
+read -p "是否使用内建 MySQL, 外部数据库仅支持 MySQL: (y/n)y"  build_in_database
+
+if [[ -z "${build_in_database}" || "${build_in_database}" == "y" ]];then
+ build_in_database='y'
+else
+ build_in_database='n'
+fi
+
+if [[ "${build_in_database}" == "n" ]];then
+  read -p "Mysql database address: "  MYSQL_HOST
+  read -p "Mysql database schema: "  MYSQL_SCHEMA
+  read -p "Mysql database user: "  MYSQL_USER
+  read -p "Mysql database password: "  MYSQL_PASSWD
+fi
+
 function log() {
    message="[DATAEASE Log]: $1 "
    echo -e "${message}" 2>&1 | tee -a ${CURRENT_DIR}/install.log
 }
 
-args=$@
-
-docker_config_folder="/etc/docker"
-compose_files="-f docker-compose.yml"
-
-DE_RUN_BASE=/opt/dataease
-
 mkdir -p ${DE_RUN_BASE}
 cp -r ./dataease/* ${DE_RUN_BASE}/
 
-conf_folder=${DE_RUN_BASE}/conf
 mkdir -p $conf_folder
-templates_folder=${DE_RUN_BASE}/templates
 
 sed -i -e "s/MYSQL_HOST/${MYSQL_HOST}/g" $templates_folder/dataease.properties
 sed -i -e "s/MYSQL_SCHEMA/${MYSQL_SCHEMA}/g" $templates_folder/dataease.properties
@@ -73,7 +71,7 @@ if [[ "${build_in_database}" == "y" ]];then
   compose_files="${compose_files} -f docker-compose-mysql.yml"
 fi
 
-if [[ "${full_mode}" == "y" ]];then
+if [[ "${basic_mode}" == "n" ]];then
   log "拷贝 kettle,doris 配置文件  -> $conf_folder"
   cp -r $templates_folder/be.conf $conf_folder
   cp -r $templates_folder/de.conf $conf_folder
@@ -86,11 +84,14 @@ fi
 
 cd ${CURRENT_DIR}
 
-echo "build_in_database=${build_in_database}">> dectl
-echo "full_mode=${full_mode}">> dectl
 
-cp dectl /usr/local/bin && chmod +x /usr/local/bin/dectl
-ln -s /usr/local/bin/dectl /usr/bin/dectl 2>/dev/null
+\cp dectl /usr/local/bin && chmod +x /usr/local/bin/dectl
+if [ ! -f /usr/local/bin/dectl ]; then
+  ln -s /usr/local/bin/dectl /usr/bin/dectl 2>/dev/null
+fi
+
+sed -i "/#!\/bin\/bash/a build_in_database=${build_in_database}" /usr/local/bin/dectl
+sed -i "/#!\/bin\/bash/a basic_mode=${basic_mode}" /usr/local/bin/dectl
 
 echo "time: $(date)"
 
@@ -191,32 +192,4 @@ dectl status 2>&1 | tee -a ${CURRENT_DIR}/install.log
 echo -e "======================= 安装完成 =======================\n" 2>&1 | tee -a ${CURRENT_DIR}/install.log
 echo -e "请通过以下方式访问:\n URL: http://\$LOCAL_IP\n 用户名: admin\n 初始密码: dataease" 2>&1 | tee -a ${CURRENT_DIR}/install.log
 echo -e "您可以使用命令 'dectl status' 检查服务运行情况.\n" 2>&1 | tee -a ${CURRENT_DIR}/install.log-a ${CURRENT_DIR}/install.log
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

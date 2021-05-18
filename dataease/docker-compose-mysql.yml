@@ -1,0 +1,28 @@
+version: '2.1'
+services:
+
+  mysql:
+    image: registry.fit2cloud.com/dataease/mysql:5.7.25
+    container_name: mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    env_file:
+      - ./conf/mysql.env
+    ports:
+      - 3306:3306
+    volumes:
+      - /opt/dataease/conf/my.cnf:/etc/mysql/conf.d/my.cnf
+      - /opt/dataease/bin/mysql:/docker-entrypoint-initdb.d/
+      - dataease-mysql-data:/var/lib/mysql
+    networks:
+      - dataease-network
+
+volumes:
+  dataease-mysql-data:
+    driver_opts:
+      type: none
+      device: /opt/dataease/data/mysql
+      o: bind

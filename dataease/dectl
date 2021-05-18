@@ -10,7 +10,7 @@ compose_files="-f docker-compose.yml"
 if [[ "${build_in_database}" == "y" ]];then
   compose_files="${compose_files} -f docker-compose-mysql.yml"
 fi
-if [[ "${full_mode}" == "y" ]];then
+if [[ "${basic_mode}" == "n" ]];then
   compose_files="${compose_files} -f docker-compose-kettle-doris.yml"
 fi
 
