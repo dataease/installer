@@ -7,6 +7,12 @@ DE_BASE=/opt/
 export COMPOSE_HTTP_TIMEOUT=180
 
 compose_files="-f docker-compose.yml"
+if [[ "${build_in_database}" == "y" ]];then
+  compose_files="${compose_files} -f docker-compose-mysql.yml"
+fi
+if [[ "${full_mode}" == "y" ]];then
+  compose_files="${compose_files} -f docker-compose-kettle-doris.yml"
+fi
 
 function usage() {
    echo "DATAEASE 控制脚本"

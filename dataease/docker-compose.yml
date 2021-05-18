@@ -17,59 +17,6 @@ services:
     networks:
       - dataease-network
 
-  mysql:
-    image: registry.fit2cloud.com/dataease/mysql:5.7.25
-    container_name: mysql
-    healthcheck:
-      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
-      interval: 5s
-      timeout: 3s
-      retries: 10
-    env_file:
-      - ./conf/mysql.env
-    ports:
-      - 3306:3306
-    volumes:
-      - /opt/dataease/conf/my.cnf:/etc/mysql/conf.d/my.cnf
-      - /opt/dataease/bin/mysql:/docker-entrypoint-initdb.d/
-      - dataease-mysql-data:/var/lib/mysql
-    networks:
-      - dataease-network
-
-  doris_fe:
-    image: registry.fit2cloud.com/dataease/doris:0.13
-    container_name: doris_fe
-    environment:
-      - DORIS_ROLE=fe-leader
-    volumes:
-      - dataease-fe-data:/opt/doris/fe/doris-meta
-      - /opt/dataease/conf/fe.conf /opt/doris/fe/conf/fe.conf
-    networks:
-      dataease-network :
-        ipv4_address: 172.19.0.198
-
-  doris_be:
-    image: registry.fit2cloud.com/dataease/doris:0.13
-    container_name: doris_be
-    environment:
-      - DORIS_ROLE=be
-    volumes:
-      - dataease-be-data:/opt/doris/be/storage
-      - /opt/dataease/conf/be.conf /opt/doris/be/conf/be.conf
-    networks:
-      dataease-network :
-        ipv4_address: 172.19.0.199
-
-  kettle:
-    image: registry.fit2cloud.com/dataease/kettle:8.3
-    container_name: kettle
-    volumes:
-      - /opt/dataease/conf/:/opt/dataease/conf
-      - dataease-kettle-data:/opt/dataease/data/kettle
-    networks:
-      - dataease-network
-
-
 volumes:
   dataease-conf:
     driver_opts:
@@ -85,21 +32,6 @@ volumes:
     driver_opts:
       type: none
       device: /opt/dataease/data/kettle
-      o: bind
-  dataease-mysql-data:
-    driver_opts:
-      type: none
-      device: /opt/dataease/data/mysql
-      o: bind
-  dataease-fe-data:
-    driver_opts:
-      type: none
-      device: /opt/dataease/data/fe
-      o: bind
-  dataease-be-data:
-    driver_opts:
-      type: none
-      device: /opt/dataease/data/be
       o: bind
 
 networks:

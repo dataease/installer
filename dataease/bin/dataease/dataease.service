@@ -4,12 +4,12 @@
 
 function startDATAEASE
 {
-    f2cctl reload
+    dectl reload
 }
 
 function stopDATAEASE
 {
-    f2cctl uninstall
+    dectl uninstall
 }
 
 function restartDATAEASE
@@ -20,7 +20,7 @@ function restartDATAEASE
 
 function statusDATAEASE
 {
-    f2cctl status
+    dectl status
 }
 
 export HOSTNAME=$HOSTNAME

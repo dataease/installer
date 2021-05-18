@@ -4,6 +4,14 @@ MYSQL_SCHEMA=dataease
 MYSQL_USER=root
 MYSQL_PASSWD=Password123@mysql
 
+read -p "Use the use full function mode: (y/n)"  full_mode
+
+if [[ -z "${full_mode}" || "${full_mode}" == "y"  ]];then
+ full_mode=y
+else
+ full_mode=n
+fi
+
 read -p "Use the built in database, external database supports MySQL only: (y/n)"  build_in_database
 
 if [[ -z "${build_in_database}" || "${build_in_database}" == "y"  ]];then
@@ -11,6 +19,7 @@ if [[ -z "${build_in_database}" || "${build_in_database}" == "y"  ]];then
 else
  build_in_database=n
 fi
+
 if [[ "${build_in_database}" == "n"   ]];then
   read -p "Mysql database address: "  MYSQL_HOST
   read -p "Mysql database schema: "  MYSQL_SCHEMA
@@ -18,10 +27,12 @@ if [[ "${build_in_database}" == "n"   ]];then
   read -p "Mysql database password: "  MYSQL_PASSWD
 fi
 
+
 CURRENT_DIR=$(
    cd "$(dirname "$0")"
    pwd
 )
+
 os=`uname -a`
 function log() {
    message="[DATAEASE Log]: $1 "
@@ -48,30 +59,38 @@ sed -i -e "s/MYSQL_USER/${MYSQL_USER}/g" $templates_folder/dataease.properties
 sed -i -e "s/MYSQL_PASSWD/${MYSQL_PASSWD}/g" $templates_folder/dataease.properties
 sed -i -e "s/MYSQL_PASSWD/${MYSQL_PASSWD}/g" $templates_folder/mysql.env
 
-cp -r $templates_folder/* $conf_folder
-cp -r $templates_folder/.kettle $conf_folder
+echo -e "======================= 开始安装 =======================" 2>&1 | tee -a ${CURRENT_DIR}/install.log
 
-cd $templates_folder
-conf_template_files=( dataease.properties be.conf de.conf)
-for i in ${conf_template_files[@]}; do
-   if [ -f $i ]; then
-      envsubst < $i > $conf_folder/$i
-   fi
-done
+log "拷贝主配置文件 dataease.properties -> $conf_folder"
+cp -r $templates_folder/dataease.properties $conf_folder
+cp -r $templates_folder/version $conf_folder
 
-envsubst < ${CURRENT_DIR}/dataease/bin/mysql/init.sql > ${DE_RUN_BASE}/bin/mysql/init.sql
+if [[ "${build_in_database}" == "y" ]];then
+  log "拷贝 mysql 配置文件  -> $conf_folder"
+  cp -r $templates_folder/mysql.env $conf_folder
+  cp -r $templates_folder/my.cnf $conf_folder
+  mkdir -p ${DE_RUN_BASE}/data/mysql
+  compose_files="${compose_files} -f docker-compose-mysql.yml"
+fi
+
+if [[ "${full_mode}" == "y" ]];then
+  log "拷贝 kettle,doris 配置文件  -> $conf_folder"
+  cp -r $templates_folder/be.conf $conf_folder
+  cp -r $templates_folder/de.conf $conf_folder
+  cp -r $templates_folder/.kettle $conf_folder
+  mkdir -p ${DE_RUN_BASE}/data/kettle
+  mkdir -p ${DE_RUN_BASE}/data/fe
+  mkdir -p ${DE_RUN_BASE}/data/be
+  compose_files="${compose_files} -f docker-compose-kettle-doris.yml"
+fi
 
 cd ${CURRENT_DIR}
-mkdir -p ${DE_RUN_BASE}/data/kettle
-mkdir -p ${DE_RUN_BASE}/data/fe
-mkdir -p ${DE_RUN_BASE}/data/be
-mkdir -p ${DE_RUN_BASE}/data/mysql
 
+echo "build_in_database=${build_in_database}">> dectl
+echo "full_mode=${full_mode}">> dectl
 
 cp dectl /usr/local/bin && chmod +x /usr/local/bin/dectl
 ln -s /usr/local/bin/dectl /usr/bin/dectl 2>/dev/null
-
-echo -e "======================= 开始安装 =======================" 2>&1 | tee -a ${CURRENT_DIR}/install.log
 
 echo "time: $(date)"
 
@@ -89,14 +108,13 @@ else
       chmod +x /usr/bin/docker*
       chmod 754 /etc/systemd/system/docker.service
       log "... 启动 docker"
-      systemctl daemon-reload; service docker start 2>&1 | tee -a ${CURRENT_DIR}/install.log
-
+      systemctl enable docker; systemctl daemon-reload; service docker start 2>&1 | tee -a ${CURRENT_DIR}/install.log
    else
       log "... 在线安装 docker"
       curl -fsSL https://get.docker.com -o get-docker.sh 2>&1 | tee -a ${CURRENT_DIR}/install.log
       sudo sh get-docker.sh 2>&1 | tee -a ${CURRENT_DIR}/install.log
       log "... 启动 docker"
-      service docker start 2>&1 | tee -a ${CURRENT_DIR}/install.log
+      systemctl enable docker; systemctl daemon-reload; service docker start 2>&1 | tee -a ${CURRENT_DIR}/install.log
    fi
 
    if [ ! -d "$docker_config_folder" ];then
@@ -139,6 +157,7 @@ log "配置 dataease Service"
 cp ${DE_RUN_BASE}/bin/dataease/dataease.service /etc/init.d/dataease
 chmod a+x /etc/init.d/dataease
 chkconfig --add dataease
+
 dataeaseService=`grep "service dataease start" /etc/rc.d/rc.local | wc -l`
 if [ "$dataeaseService" -eq 0 ]; then
    echo "sleep 10" >> /etc/rc.d/rc.local
