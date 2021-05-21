@@ -50,6 +50,7 @@ mkdir -p ${DE_RUN_BASE}
 cp -r ./dataease/* ${DE_RUN_BASE}/
 
 mkdir -p $conf_folder
+mkdir -p ${DE_RUN_BASE}/data/kettle
 
 sed -i -e "s/MYSQL_HOST/${MYSQL_HOST}/g" $templates_folder/dataease.properties
 sed -i -e "s/MYSQL_SCHEMA/${MYSQL_SCHEMA}/g" $templates_folder/dataease.properties
@@ -76,7 +77,6 @@ if [[ "${basic_mode}" == "n" ]];then
   cp -r $templates_folder/be.conf $conf_folder
   cp -r $templates_folder/de.conf $conf_folder
   cp -r $templates_folder/.kettle $conf_folder
-  mkdir -p ${DE_RUN_BASE}/data/kettle
   mkdir -p ${DE_RUN_BASE}/data/fe
   mkdir -p ${DE_RUN_BASE}/data/be
   compose_files="${compose_files} -f docker-compose-kettle-doris.yml"
