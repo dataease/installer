@@ -18,13 +18,6 @@ compose_files="-f docker-compose.yml"
 conf_folder=${DE_RUN_BASE}/conf
 templates_folder=${DE_RUN_BASE}/templates
 
-read -p "是否进行精简模式安装: (y/n)y"  basic_mode
-
-if [[ -z "${basic_mode}" || "${basic_mode}" == "y" ]];then
- basic_mode='y'
-else
- basic_mode='n'
-fi
 
 read -p "是否使用内建 MySQL, 外部数据库仅支持 MySQL: (y/n)y"  build_in_database
 
@@ -72,15 +65,13 @@ if [[ "${build_in_database}" == "y" ]];then
   compose_files="${compose_files} -f docker-compose-mysql.yml"
 fi
 
-if [[ "${basic_mode}" == "n" ]];then
-  log "拷贝 kettle,doris 配置文件  -> $conf_folder"
-  cp -r $templates_folder/be.conf $conf_folder
-  cp -r $templates_folder/de.conf $conf_folder
-  cp -r $templates_folder/.kettle $conf_folder
-  mkdir -p ${DE_RUN_BASE}/data/fe
-  mkdir -p ${DE_RUN_BASE}/data/be
-  compose_files="${compose_files} -f docker-compose-kettle-doris.yml"
-fi
+log "拷贝 kettle,doris 配置文件  -> $conf_folder"
+cp -r $templates_folder/be.conf $conf_folder
+cp -r $templates_folder/de.conf $conf_folder
+cp -r $templates_folder/.kettle $conf_folder
+mkdir -p ${DE_RUN_BASE}/data/fe
+mkdir -p ${DE_RUN_BASE}/data/be
+compose_files="${compose_files} -f docker-compose-kettle-doris.yml"
 
 cd ${CURRENT_DIR}
 
@@ -91,7 +82,6 @@ if [ ! -f /usr/local/bin/dectl ]; then
 fi
 
 sed -i "/#!\/bin\/bash/a build_in_database=${build_in_database}" /usr/local/bin/dectl
-sed -i "/#!\/bin\/bash/a basic_mode=${basic_mode}" /usr/local/bin/dectl
 
 echo "time: $(date)"
 

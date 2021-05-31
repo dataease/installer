@@ -6,12 +6,9 @@ args=$@
 DE_BASE=/opt/
 export COMPOSE_HTTP_TIMEOUT=180
 
-compose_files="-f docker-compose.yml"
+compose_files="-f docker-compose.yml -f docker-compose-kettle-doris.yml"
 if [[ "${build_in_database}" == "y" ]];then
   compose_files="${compose_files} -f docker-compose-mysql.yml"
-fi
-if [[ "${basic_mode}" == "n" ]];then
-  compose_files="${compose_files} -f docker-compose-kettle-doris.yml"
 fi
 
 function usage() {
