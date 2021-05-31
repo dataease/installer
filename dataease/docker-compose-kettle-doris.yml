@@ -2,7 +2,7 @@ version: '2.1'
 services:
 
   doris_fe:
-    image: registry.fit2cloud.com/dataease/doris:0.13
+    image: registry.fit2cloud.com/dataease/doris-init:0.14
     container_name: doris_fe
     environment:
       - DORIS_ROLE=fe-leader
@@ -14,7 +14,7 @@ services:
         ipv4_address: 172.19.0.198
 
   doris_be:
-    image: registry.fit2cloud.com/dataease/doris:0.13
+    image: registry.fit2cloud.com/dataease/doris-init:0.14
     container_name: doris_be
     environment:
       - DORIS_ROLE=be
