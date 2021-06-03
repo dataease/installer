@@ -19,7 +19,7 @@ conf_folder=${DE_RUN_BASE}/conf
 templates_folder=${DE_RUN_BASE}/templates
 
 
-read -p "是否使用内建 MySQL, 外部数据库仅支持 MySQL: (y/n)y"  build_in_database
+read -p "是否使用内建 MySQL, 外部数据库仅支持 MySQL: (y/n, 默认y)"  build_in_database
 
 if [[ -z "${build_in_database}" || "${build_in_database}" == "y" ]];then
  build_in_database='y'
@@ -67,7 +67,7 @@ fi
 
 log "拷贝 kettle,doris 配置文件  -> $conf_folder"
 cp -r $templates_folder/be.conf $conf_folder
-cp -r $templates_folder/de.conf $conf_folder
+cp -r $templates_folder/fe.conf $conf_folder
 cp -r $templates_folder/.kettle $conf_folder
 mkdir -p ${DE_RUN_BASE}/data/fe
 mkdir -p ${DE_RUN_BASE}/data/be
