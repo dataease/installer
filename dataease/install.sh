@@ -77,7 +77,7 @@ cd ${CURRENT_DIR}
 
 
 \cp dectl /usr/local/bin && chmod +x /usr/local/bin/dectl
-if [ ! -f /usr/local/bin/dectl ]; then
+if [ ! -f /usr/bin/dectl ]; then
   ln -s /usr/local/bin/dectl /usr/bin/dectl 2>/dev/null
 fi
 
