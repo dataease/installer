@@ -10,6 +10,7 @@ services:
     volumes:
       - dataease-conf:/opt/dataease/conf
       - dataease-logs:/opt/dataease/logs
+      - dataease-plugins:/opt/dataease/plugins
       - dataease-kettle-data:/opt/dataease/data/kettle
     depends_on:
       mysql:
@@ -27,6 +28,11 @@ volumes:
     driver_opts:
       type: none
       device: /opt/dataease/logs
+      o: bind
+  dataease-plugins:
+    driver_opts:
+      type: none
+      device: /opt/dataease/plugins
       o: bind
   dataease-kettle-data:
     driver_opts:
