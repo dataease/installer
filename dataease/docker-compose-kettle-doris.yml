@@ -1,26 +1,26 @@
 version: '2.1'
 services:
 
-  doris_fe:
+  doris-fe:
     image: registry.fit2cloud.com/dataease/doris-init:0.14
-    container_name: doris_fe
+    container_name: doris-fe
     environment:
       - DORIS_ROLE=fe-leader
     volumes:
       - dataease-fe-data:/opt/doris/fe/doris-meta
-      - /opt/dataease/conf/fe.conf /opt/doris/fe/conf/fe.conf
+      - /opt/dataease/conf/fe.conf:/opt/doris/fe/conf/fe.conf
     networks:
       dataease-network :
         ipv4_address: 172.19.0.198
 
-  doris_be:
+  doris-be:
     image: registry.fit2cloud.com/dataease/doris-init:0.14
-    container_name: doris_be
+    container_name: doris-be
     environment:
       - DORIS_ROLE=be
     volumes:
       - dataease-be-data:/opt/doris/be/storage
-      - /opt/dataease/conf/be.conf /opt/doris/be/conf/be.conf
+      - /opt/dataease/conf/be.conf:/opt/doris/be/conf/be.conf
     networks:
       dataease-network :
         ipv4_address: 172.19.0.199
