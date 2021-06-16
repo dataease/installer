@@ -2,7 +2,7 @@ version: '2.1'
 services:
 
   mysql:
-    image: registry.fit2cloud.com/dataease/mysql:5.7.25
+    image: registry.cn-qingdao.aliyuncs.com/dataease/mysql:5.7.25
     container_name: mysql
     healthcheck:
       test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
