@@ -13,6 +13,7 @@ services:
     networks:
       dataease-network :
         ipv4_address: 172.19.0.198
+    restart: always
 
   doris-be:
     image: registry.cn-qingdao.aliyuncs.com/dataease/doris-init:master
@@ -26,6 +27,7 @@ services:
     networks:
       dataease-network :
         ipv4_address: 172.19.0.199
+    restart: always
 
   kettle:
     image: registry.cn-qingdao.aliyuncs.com/dataease/kettle:8.3
@@ -35,7 +37,7 @@ services:
       - dataease-kettle-data:/opt/dataease/data/kettle
     networks:
       - dataease-network
-
+    restart: always
 
 volumes:
   dataease-fe-data:
