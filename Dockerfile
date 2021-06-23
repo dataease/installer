@@ -1,4 +1,4 @@
-FROM IMAGE_PATH
+FROM registry.cn-qingdao.aliyuncs.com/dataease/dataease:IMAGE_TAG
 
 RUN mkdir -p /opt/dataease/plugins/default
 
