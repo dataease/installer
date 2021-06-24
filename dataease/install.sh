@@ -18,26 +18,33 @@ compose_files="-f docker-compose.yml"
 conf_folder=${DE_RUN_BASE}/conf
 templates_folder=${DE_RUN_BASE}/templates
 
-
-read -p "是否使用内建 MySQL, 外部数据库仅支持 MySQL: (y/n, 默认y)"  build_in_database
-
-if [[ -z "${build_in_database}" || "${build_in_database}" == "y" ]];then
- build_in_database='y'
+reinstall_or_upgrade="n"
+if [[ -f /usr/bin/dectl ]];then
+   reinstall_or_upgrade="y"
 else
- build_in_database='n'
+   read -p "是否使用内建 MySQL, 外部数据库仅支持 MySQL: (y/n, 默认y)"  build_in_database
+
+   if [[ -z "${build_in_database}" || "${build_in_database}" == "y" ]];then
+    build_in_database='y'
+   else
+    build_in_database='n'
+   fi
+
+   if [[ "${build_in_database}" == "n" ]];then
+     read -p "Mysql database address: "  MYSQL_HOST
+     read -p "Mysql database schema: "  MYSQL_SCHEMA
+     read -p "Mysql database user: "  MYSQL_USER
+     read -p "Mysql database password: "  MYSQL_PASSWD
+   fi
 fi
 
-if [[ "${build_in_database}" == "n" ]];then
-  read -p "Mysql database address: "  MYSQL_HOST
-  read -p "Mysql database schema: "  MYSQL_SCHEMA
-  read -p "Mysql database user: "  MYSQL_USER
-  read -p "Mysql database password: "  MYSQL_PASSWD
-fi
 
 function log() {
    message="[DATAEASE Log]: $1 "
    echo -e "${message}" 2>&1 | tee -a ${CURRENT_DIR}/install.log
 }
+
+echo -e "======================= 开始安装 =======================" 2>&1 | tee -a ${CURRENT_DIR}/install.log
 
 mkdir -p ${DE_RUN_BASE}
 cp -r ./dataease/* ${DE_RUN_BASE}/
@@ -45,25 +52,32 @@ cp -r ./dataease/* ${DE_RUN_BASE}/
 mkdir -p $conf_folder
 mkdir -p ${DE_RUN_BASE}/data/kettle
 
-sed -i -e "s/MYSQL_HOST/${MYSQL_HOST}/g" $templates_folder/dataease.properties
-sed -i -e "s/MYSQL_SCHEMA/${MYSQL_SCHEMA}/g" $templates_folder/dataease.properties
-sed -i -e "s/MYSQL_USER/${MYSQL_USER}/g" $templates_folder/dataease.properties
-sed -i -e "s/MYSQL_PASSWD/${MYSQL_PASSWD}/g" $templates_folder/dataease.properties
-sed -i -e "s/MYSQL_PASSWD/${MYSQL_PASSWD}/g" $templates_folder/mysql.env
+if [[ "${reinstall_or_upgrade}" == "n" ]];then
+   sed -i -e "s/MYSQL_HOST/${MYSQL_HOST}/g" $templates_folder/dataease.properties
+   sed -i -e "s/MYSQL_SCHEMA/${MYSQL_SCHEMA}/g" $templates_folder/dataease.properties
+   sed -i -e "s/MYSQL_USER/${MYSQL_USER}/g" $templates_folder/dataease.properties
+   sed -i -e "s/MYSQL_PASSWD/${MYSQL_PASSWD}/g" $templates_folder/dataease.properties
+   sed -i -e "s/MYSQL_PASSWD/${MYSQL_PASSWD}/g" $templates_folder/mysql.env
 
-echo -e "======================= 开始安装 =======================" 2>&1 | tee -a ${CURRENT_DIR}/install.log
+   log "拷贝主配置文件 dataease.properties -> $conf_folder"
+   cp -r $templates_folder/dataease.properties $conf_folder
 
-log "拷贝主配置文件 dataease.properties -> $conf_folder"
-cp -r $templates_folder/dataease.properties $conf_folder
+   if [[ "${build_in_database}" == "y" ]];then
+      log "拷贝 mysql 配置文件  -> $conf_folder"
+      cp -r $templates_folder/mysql.env $conf_folder
+      cp -r $templates_folder/my.cnf $conf_folder
+      mkdir -p ${DE_RUN_BASE}/data/mysql
+   fi
+fi
+
+if [[ -z "${build_in_database}" || "${build_in_database}" == "y" ]];then
+   build_in_database='y'
+   compose_files="${compose_files} -f docker-compose-mysql.yml"
+fi
+
+
 cp -r $templates_folder/version $conf_folder
 
-if [[ "${build_in_database}" == "y" ]];then
-  log "拷贝 mysql 配置文件  -> $conf_folder"
-  cp -r $templates_folder/mysql.env $conf_folder
-  cp -r $templates_folder/my.cnf $conf_folder
-  mkdir -p ${DE_RUN_BASE}/data/mysql
-  compose_files="${compose_files} -f docker-compose-mysql.yml"
-fi
 
 log "拷贝 kettle,doris 配置文件  -> $conf_folder"
 cp -r $templates_folder/be.conf $conf_folder
@@ -168,9 +182,13 @@ else
 fi
 
 if which firewall-cmd >/dev/null; then
-   log "防火墙端口开放"
-   firewall-cmd --zone=public --add-port=80/tcp --permanent
-   firewall-cmd --reload
+   if systemctl is-active firewalld &>/dev/null ;then
+      log "防火墙端口开放"
+      firewall-cmd --zone=public --add-port=80/tcp --permanent
+      firewall-cmd --reload
+   else
+      log "防火墙未开启，忽略端口开放"
+   fi
 fi
 
 
