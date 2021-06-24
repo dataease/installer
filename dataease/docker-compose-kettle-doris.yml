@@ -2,7 +2,7 @@ version: '2.1'
 services:
 
   doris-fe:
-    image: registry.cn-qingdao.aliyuncs.com/dataease/doris-init:master
+    image: registry.cn-qingdao.aliyuncs.com/dataease/doris-init:0.14.0-611
     container_name: doris-fe
     environment:
       - DORIS_ROLE=fe-leader
@@ -16,7 +16,7 @@ services:
     restart: always
 
   doris-be:
-    image: registry.cn-qingdao.aliyuncs.com/dataease/doris-init:master
+    image: registry.cn-qingdao.aliyuncs.com/dataease/doris-init:0.14.0-611
     container_name: doris-be
     environment:
       - DORIS_ROLE=be
