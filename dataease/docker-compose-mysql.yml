@@ -12,7 +12,7 @@ services:
     env_file:
       - ./conf/mysql.env
     ports:
-      - 3306:3306
+      - ${DE_MYSQL_PORT}:3306
     volumes:
       - /opt/dataease/conf/my.cnf:/etc/mysql/conf.d/my.cnf
       - /opt/dataease/bin/mysql:/docker-entrypoint-initdb.d/
