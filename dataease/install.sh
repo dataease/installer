@@ -56,6 +56,7 @@ fi
 log "拷贝配置文件模板文件  -> $conf_folder"
 cd $DE_RUN_BASE
 cp -r $templates_folder/* $conf_folder
+cp -r $templates_folder/.kettle $conf_folder
 
 log "根据安装配置参数调整配置文件"
 cd ${templates_folder}
