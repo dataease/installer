@@ -198,7 +198,7 @@ dectl status 2>&1 | tee -a ${CURRENT_DIR}/install.log
 for b in {1..30}
 do
    sleep 3
-   http_code=`curl -sILw "%{http_code}\n" http://localhost -o /dev/null`
+   http_code=`curl -sILw "%{http_code}\n" http://localhost:${DE_PORT} -o /dev/null`
    if [[ $http_code == 000 ]];then
       log "服务启动中，请稍后 ..."
    elif [[ $http_code == 200 ]];then
