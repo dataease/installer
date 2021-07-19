@@ -22,22 +22,22 @@ volumes:
   dataease-conf:
     driver_opts:
       type: none
-      device: /opt/dataease/conf
+      device: ${DE_BASE}/dataease/conf
       o: bind
   dataease-logs:
     driver_opts:
       type: none
-      device: /opt/dataease/logs
+      device: ${DE_BASE}/dataease/logs
       o: bind
   dataease-plugins:
     driver_opts:
       type: none
-      device: /opt/dataease/plugins/thirdpart
+      device: ${DE_BASE}/dataease/plugins/thirdpart
       o: bind
   dataease-kettle-data:
     driver_opts:
       type: none
-      device: /opt/dataease/data/kettle
+      device: ${DE_BASE}/dataease/data/kettle
       o: bind
 
 networks:
