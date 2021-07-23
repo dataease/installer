@@ -30,7 +30,7 @@ services:
     restart: always
 
   kettle:
-    image: registry.cn-qingdao.aliyuncs.com/dataease/kettle:8.3
+    image: registry.cn-qingdao.aliyuncs.com/dataease/kettle:8.3-v1.1
     container_name: kettle
     volumes:
       - ${DE_BASE}/dataease/conf/:/opt/dataease/conf
