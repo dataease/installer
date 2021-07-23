@@ -3,11 +3,14 @@ action=$1
 target=$2
 args=$@
 
-DE_BASE=/opt/
+DE_BASE=/opt
+
+source ${DE_BASE}/dataease/.env
+
 export COMPOSE_HTTP_TIMEOUT=180
 
 compose_files="-f docker-compose.yml -f docker-compose-kettle-doris.yml"
-if [[ "${build_in_database}" == "y" ]];then
+if [ ${DE_EXTERNAL_MYSQL} = "false" ]; then
   compose_files="${compose_files} -f docker-compose-mysql.yml"
 fi
 
@@ -51,7 +54,7 @@ function reload() {
 }
 function uninstall() {
    echo
-   cd ${DE_BASE}/dataease; docker-compose ${compose_files} ${module_compose_files} down -v ${target}
+   cd ${DE_BASE}/dataease; docker-compose ${compose_files} down -v ${target}
 }
 function version() {
    echo
