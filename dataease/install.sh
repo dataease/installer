@@ -1,103 +1,87 @@
 #!/bin/bash
-MYSQL_HOST=mysql
-MYSQL_SCHEMA=dataease
-MYSQL_USER=root
-MYSQL_PASSWD=Password123@mysql
-
-DE_RUN_BASE=/opt/dataease
 
 CURRENT_DIR=$(
    cd "$(dirname "$0")"
    pwd
 )
 
-args=$@
-os=`uname -a`
-docker_config_folder="/etc/docker"
-compose_files="-f docker-compose.yml"
-conf_folder=${DE_RUN_BASE}/conf
-templates_folder=${DE_RUN_BASE}/templates
-
-reinstall_or_upgrade="n"
-if [[ -f /usr/bin/dectl ]];then
-   reinstall_or_upgrade="y"
-else
-   read -p "是否使用内建 MySQL, 外部数据库仅支持 MySQL: (y/n, 默认y)"  build_in_database
-
-   if [[ -z "${build_in_database}" || "${build_in_database}" == "y" ]];then
-    build_in_database='y'
-   else
-    build_in_database='n'
-   fi
-
-   if [[ "${build_in_database}" == "n" ]];then
-     read -p "Mysql database address: "  MYSQL_HOST
-     read -p "Mysql database schema: "  MYSQL_SCHEMA
-     read -p "Mysql database user: "  MYSQL_USER
-     read -p "Mysql database password: "  MYSQL_PASSWD
-   fi
-fi
-
-
 function log() {
    message="[DATAEASE Log]: $1 "
    echo -e "${message}" 2>&1 | tee -a ${CURRENT_DIR}/install.log
 }
+
+args=$@
+os=`uname -a`
+docker_config_folder="/etc/docker"
+compose_files="-f docker-compose.yml -f docker-compose-kettle-doris.yml"
+
+if [ -f /usr/bin/dectl ]; then
+   # 获取已安装的 DataEase 的运行目录
+   DE_BASE=`grep "^DE_BASE=" /usr/bin/dectl | cut -d'=' -f2`
+fi
+
+set -a
+if [[ $DE_BASE ]] && [[ -f $DE_BASE/dataease/.env ]]; then
+   source $DE_BASE/dataease/.env
+else
+   source ${CURRENT_DIR}/install.conf
+fi
+set +a
+
+DE_RUN_BASE=$DE_BASE/dataease
+conf_folder=${DE_RUN_BASE}/conf
+templates_folder=${DE_RUN_BASE}/templates
 
 echo -e "======================= 开始安装 =======================" 2>&1 | tee -a ${CURRENT_DIR}/install.log
 
 mkdir -p ${DE_RUN_BASE}
 cp -r ./dataease/* ${DE_RUN_BASE}/
 
+cd $DE_RUN_BASE
+env | grep DE_ >.env
+
 mkdir -p $conf_folder
 mkdir -p ${DE_RUN_BASE}/data/kettle
-
-if [[ "${reinstall_or_upgrade}" == "n" ]];then
-   sed -i -e "s/MYSQL_HOST/${MYSQL_HOST}/g" $templates_folder/dataease.properties
-   sed -i -e "s/MYSQL_SCHEMA/${MYSQL_SCHEMA}/g" $templates_folder/dataease.properties
-   sed -i -e "s/MYSQL_USER/${MYSQL_USER}/g" $templates_folder/dataease.properties
-   sed -i -e "s/MYSQL_PASSWD/${MYSQL_PASSWD}/g" $templates_folder/dataease.properties
-   sed -i -e "s/MYSQL_PASSWD/${MYSQL_PASSWD}/g" $templates_folder/mysql.env
-
-   log "拷贝主配置文件 dataease.properties -> $conf_folder"
-   cp -r $templates_folder/dataease.properties $conf_folder
-
-   if [[ "${build_in_database}" == "y" ]];then
-      log "拷贝 mysql 配置文件  -> $conf_folder"
-      cp -r $templates_folder/mysql.env $conf_folder
-      cp -r $templates_folder/my.cnf $conf_folder
-      mkdir -p ${DE_RUN_BASE}/data/mysql
-   fi
-fi
-
-if [[ -z "${build_in_database}" || "${build_in_database}" == "y" ]];then
-   build_in_database='y'
-   compose_files="${compose_files} -f docker-compose-mysql.yml"
-fi
-
-
-cp -r $templates_folder/version $conf_folder
-
-
-log "拷贝 kettle,doris 配置文件  -> $conf_folder"
-cp -r $templates_folder/be.conf $conf_folder
-cp -r $templates_folder/fe.conf $conf_folder
-cp -r $templates_folder/.kettle $conf_folder
 mkdir -p ${DE_RUN_BASE}/data/fe
 mkdir -p ${DE_RUN_BASE}/data/be
-compose_files="${compose_files} -f docker-compose-kettle-doris.yml"
+mkdir -p ${DE_RUN_BASE}/data/mysql
+
+if [ ${DE_EXTERNAL_MYSQL} = "false" ]; then
+   compose_files="${compose_files} -f docker-compose-mysql.yml"
+else
+   sed -i -e "/^    depends_on/,+2d" docker-compose.yml
+fi
+
+
+log "拷贝配置文件模板文件  -> $conf_folder"
+cd $DE_RUN_BASE
+cp -r $templates_folder/* $conf_folder
+cp -r $templates_folder/.kettle $conf_folder
+
+log "根据安装配置参数调整配置文件"
+cd ${templates_folder}
+templates_files=( dataease.properties mysql.env )
+for i in ${templates_files[@]}; do
+   if [ -f $i ]; then
+      envsubst < $i > $conf_folder/$i
+   fi
+done
+
 
 cd ${CURRENT_DIR}
-
-
+sed -i -e "s#DE_BASE=.*#DE_BASE=${DE_BASE}#g" dectl
 \cp dectl /usr/local/bin && chmod +x /usr/local/bin/dectl
 if [ ! -f /usr/bin/dectl ]; then
   ln -s /usr/local/bin/dectl /usr/bin/dectl 2>/dev/null
 fi
 
-sed -i "/#!\/bin\/bash/a build_in_database=${build_in_database}" /usr/local/bin/dectl
-
 echo "time: $(date)"
+
+if [ $(getenforce) == "Enforcing" ];then
+   log  "... 关闭 SELINUX"
+   setenforce 0
+   sed -i "s/SELINUX=enforcing/SELINUX=disabled/g" /etc/selinux/config
+fi
 
 #Install docker & docker-compose
 ##Install Latest Stable Docker Release
@@ -125,6 +109,13 @@ else
    if [ ! -d "$docker_config_folder" ];then
       mkdir -p "$docker_config_folder"
    fi
+
+   if which docker >/dev/null; then
+      log "docker 安装成功"
+   else
+      log "docker 安装失败"
+      exit 1
+   fi
 fi
 
 ##Install Latest Stable Docker Compose Release
@@ -142,6 +133,13 @@ else
       chmod +x /usr/local/bin/docker-compose
       ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose
    fi
+
+   if which docker-compose >/dev/null; then
+      log "docker-compose 安装成功"
+   else
+      log "docker-compose 安装失败"
+      exit 1
+   fi
 fi
 
 export COMPOSE_HTTP_TIMEOUT=180
@@ -154,7 +152,7 @@ if [[ -d images ]]; then
    done
 else
    log "拉取镜像"
-   cd ${DE_RUN_BASE} && docker-compose $compose_files pull 2>&1 | tee -a ${CURRENT_DIR}/install.log
+   cd ${DE_RUN_BASE} && docker-compose $compose_files pull 2>&1
    cd -
 fi
 
@@ -197,7 +195,25 @@ cd ${DE_RUN_BASE} && docker-compose $compose_files up -d 2>&1 | tee -a ${CURRENT
 
 dectl status 2>&1 | tee -a ${CURRENT_DIR}/install.log
 
+for b in {1..30}
+do
+   sleep 3
+   http_code=`curl -sILw "%{http_code}\n" http://localhost:${DE_PORT} -o /dev/null`
+   if [[ $http_code == 000 ]];then
+      log "服务启动中，请稍后 ..."
+   elif [[ $http_code == 200 ]];then
+      log "服务启动成功!"
+      break;
+   else
+      log "服务启动出错!"
+      exit 1
+   fi
+done
+
+if [[ $http_code != 200 ]];then
+   log "等待时间内未完全启动，请稍后使用 dectl status 检查服务运行状况。"
+fi
+
 echo -e "======================= 安装完成 =======================\n" 2>&1 | tee -a ${CURRENT_DIR}/install.log
-echo -e "请通过以下方式访问:\n URL: http://\$LOCAL_IP\n 用户名: admin\n 初始密码: dataease" 2>&1 | tee -a ${CURRENT_DIR}/install.log
-echo -e "您可以使用命令 'dectl status' 检查服务运行情况.\n" 2>&1 | tee -a ${CURRENT_DIR}/install.log-a ${CURRENT_DIR}/install.log
+echo -e "请通过以下方式访问:\n URL: http://\$LOCAL_IP:$DE_PORT\n 用户名: admin\n 初始密码: dataease" 2>&1 | tee -a ${CURRENT_DIR}/install.log
 

@@ -9,7 +9,7 @@ services:
     volumes:
       - dataease-fe-data:/opt/doris/fe/doris-meta
       - dataease-fe-logs:/opt/doris/fe/log
-      - /opt/dataease/conf/fe.conf:/opt/doris/fe/conf/fe.conf
+      - ${DE_BASE}/dataease/conf/fe.conf:/opt/doris/fe/conf/fe.conf
     networks:
       dataease-network :
         ipv4_address: 172.19.0.198
@@ -23,7 +23,7 @@ services:
     volumes:
       - dataease-be-data:/opt/doris/be/storage
       - dataease-be-logs:/opt/doris/be/log
-      - /opt/dataease/conf/be.conf:/opt/doris/be/conf/be.conf
+      - ${DE_BASE}/dataease/conf/be.conf:/opt/doris/be/conf/be.conf
     networks:
       dataease-network :
         ipv4_address: 172.19.0.199
@@ -33,7 +33,7 @@ services:
     image: registry.cn-qingdao.aliyuncs.com/dataease/kettle:8.3
     container_name: kettle
     volumes:
-      - /opt/dataease/conf/:/opt/dataease/conf
+      - ${DE_BASE}/dataease/conf/:/opt/dataease/conf
       - dataease-kettle-data:/opt/dataease/data/kettle
     networks:
       - dataease-network
@@ -43,20 +43,20 @@ volumes:
   dataease-fe-data:
     driver_opts:
       type: none
-      device: /opt/dataease/data/fe
+      device: ${DE_BASE}/dataease/data/fe
       o: bind
   dataease-be-data:
     driver_opts:
       type: none
-      device: /opt/dataease/data/be
+      device: ${DE_BASE}/dataease/data/be
       o: bind
   dataease-be-logs:
     driver_opts:
       type: none
-      device: /opt/dataease/logs/be
+      device: ${DE_BASE}/dataease/logs/be
       o: bind
   dataease-fe-logs:
     driver_opts:
       type: none
-      device: /opt/dataease/logs/fe
+      device: ${DE_BASE}/dataease/logs/fe
       o: bind

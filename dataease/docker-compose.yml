@@ -5,7 +5,7 @@ services:
     image: registry.cn-qingdao.aliyuncs.com/dataease/dataease:DE_TAG
     container_name: dataease
     ports:
-      - 80:8081
+      - ${DE_PORT}:8081
     mem_limit: 4096m
     volumes:
       - dataease-conf:/opt/dataease/conf
@@ -22,22 +22,22 @@ volumes:
   dataease-conf:
     driver_opts:
       type: none
-      device: /opt/dataease/conf
+      device: ${DE_BASE}/dataease/conf
       o: bind
   dataease-logs:
     driver_opts:
       type: none
-      device: /opt/dataease/logs
+      device: ${DE_BASE}/dataease/logs
       o: bind
   dataease-plugins:
     driver_opts:
       type: none
-      device: /opt/dataease/plugins/thirdpart
+      device: ${DE_BASE}/dataease/plugins/thirdpart
       o: bind
   dataease-kettle-data:
     driver_opts:
       type: none
-      device: /opt/dataease/data/kettle
+      device: ${DE_BASE}/dataease/data/kettle
       o: bind
 
 networks:
