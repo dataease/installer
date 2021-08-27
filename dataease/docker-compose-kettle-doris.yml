@@ -14,6 +14,11 @@ services:
       dataease-network :
         ipv4_address: 172.19.0.198
     restart: always
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -sS 127.0.0.1:8030 || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
   doris-be:
     image: registry.cn-qingdao.aliyuncs.com/dataease/doris-init:master-0823
@@ -28,6 +33,11 @@ services:
       dataease-network :
         ipv4_address: 172.19.0.199
     restart: always
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -sS 127.0.0.1:8040 || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
   kettle:
     image: registry.cn-qingdao.aliyuncs.com/dataease/kettle:8.3
