@@ -77,7 +77,7 @@ fi
 
 echo "time: $(date)"
 
-if [ $(getenforce) == "Enforcing" ];then
+if which getenforce && [ $(getenforce) == "Enforcing" ];then
    log  "... 关闭 SELINUX"
    setenforce 0
    sed -i "s/SELINUX=enforcing/SELINUX=disabled/g" /etc/selinux/config
@@ -159,14 +159,19 @@ fi
 log "配置 dataease Service"
 cp ${DE_RUN_BASE}/bin/dataease/dataease.service /etc/init.d/dataease
 chmod a+x /etc/init.d/dataease
-chkconfig --add dataease
-
-dataeaseService=`grep "service dataease start" /etc/rc.d/rc.local | wc -l`
-if [ "$dataeaseService" -eq 0 ]; then
-   echo "sleep 10" >> /etc/rc.d/rc.local
-   echo "service dataease start" >> /etc/rc.d/rc.local
+if which chkconfig;then
+   chkconfig --add dataease
 fi
-chmod +x /etc/rc.d/rc.local
+
+if [ -f /etc/rc.d/rc.local ];then
+   dataeaseService=`grep "service dataease start" /etc/rc.d/rc.local | wc -l`
+   if [ "$dataeaseService" -eq 0 ]; then
+      echo "sleep 10" >> /etc/rc.d/rc.local
+      echo "service dataease start" >> /etc/rc.d/rc.local
+   fi
+   chmod +x /etc/rc.d/rc.local
+fi
+
 if [ `grep "vm.max_map_count" /etc/sysctl.conf | wc -l` -eq 0 ];then
    sysctl -w vm.max_map_count=262144
    echo "vm.max_map_count=262144" >> /etc/sysctl.conf
@@ -200,7 +205,7 @@ do
    sleep 3
    http_code=`curl -sILw "%{http_code}\n" http://localhost:${DE_PORT} -o /dev/null`
    if [[ $http_code == 000 ]];then
-      log "服务启动中，请稍后 ..."
+      log "服务启动中，请稍候 ..."
    elif [[ $http_code == 200 ]];then
       log "服务启动成功!"
       break;
