@@ -8,37 +8,15 @@ services:
       - ${DE_PORT}:8081
     mem_limit: 4096m
     volumes:
-      - dataease-conf:/opt/dataease/conf
-      - dataease-logs:/opt/dataease/logs
-      - dataease-plugins:/opt/dataease/plugins/thirdpart
-      - dataease-kettle-data:/opt/dataease/data/kettle
+      - ${DE_BASE}/dataease/conf:/opt/dataease/conf
+      - ${DE_BASE}/dataease/logs:/opt/dataease/logs
+      - ${DE_BASE}/dataease/plugins/thirdpart:/opt/dataease/plugins/thirdpart
+      - ${DE_BASE}/dataease/data/kettle:/opt/dataease/data/kettle
     depends_on:
       mysql:
         condition: service_healthy
     networks:
       - dataease-network
-
-volumes:
-  dataease-conf:
-    driver_opts:
-      type: none
-      device: ${DE_BASE}/dataease/conf
-      o: bind
-  dataease-logs:
-    driver_opts:
-      type: none
-      device: ${DE_BASE}/dataease/logs
-      o: bind
-  dataease-plugins:
-    driver_opts:
-      type: none
-      device: ${DE_BASE}/dataease/plugins/thirdpart
-      o: bind
-  dataease-kettle-data:
-    driver_opts:
-      type: none
-      device: ${DE_BASE}/dataease/data/kettle
-      o: bind
 
 networks:
   dataease-network:

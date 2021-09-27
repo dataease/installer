@@ -10,19 +10,12 @@ services:
       timeout: 3s
       retries: 10
     env_file:
-      - ./conf/mysql.env
+      - ${DE_BASE}/dataease/conf/mysql.env
     ports:
       - ${DE_MYSQL_PORT}:3306
     volumes:
       - ${DE_BASE}/dataease/conf/my.cnf:/etc/mysql/conf.d/my.cnf
       - ${DE_BASE}/dataease/bin/mysql:/docker-entrypoint-initdb.d/
-      - dataease-mysql-data:/var/lib/mysql
+      - ${DE_BASE}/dataease/data/mysql:/var/lib/mysql
     networks:
       - dataease-network
-
-volumes:
-  dataease-mysql-data:
-    driver_opts:
-      type: none
-      device: ${DE_BASE}/dataease/data/mysql
-      o: bind
