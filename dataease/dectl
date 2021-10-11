@@ -75,16 +75,16 @@ function upgrade() {
       echo -e "\e[32m 检测到GitHub上最新版本为\e[1;33m${latest_version}\e[0;32m 即将执行在线升级...\e[0m"
    fi
    sleep 2s
-   wget -nv -T 60 -t 1 --no-check-certificate https://github.com/dataease/dataease/releases/download/${latest_version}/dataease-release-${latest_version}.tar.gz -O /tmp/dataease-release-${latest_version}.tar.gz
+   wget -nv -T 60 -t 1 --no-check-certificate https://github.com/dataease/dataease/releases/download/${latest_version}/dataease-${latest_version}-online.tar.gz -O /tmp/dataease-${latest_version}-online.tar.gz
    if [ $? -ne 0 ]; then
       echo -e "\e[31m升级失败:连接GitHub超时！\n可手动下载升级包，然后执行\e[1;33m /bin/bash install.sh \e[0;31m离线升级，也可以重新执行一次 dectl upgrade 命令。\e[0m"
       return 2
    fi
    cd /tmp
-   tar zxvf dataease-release-${latest_version}.tar.gz
-   cd dataease-release-${latest_version}
+   tar zxvf dataease-${latest_version}-online.tar.gz
+   cd dataease-${latest_version}-online
    /bin/bash install.sh
-   rm -rf /tmp/dataease-release-${latest_version}
+   rm -rf /tmp/dataease-${latest_version}-online
 }
 
 function main() {
