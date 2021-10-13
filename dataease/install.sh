@@ -110,18 +110,18 @@ else
       mkdir -p "$docker_config_folder"
    fi
 
-   if which docker >/dev/null; then
-      log "docker 安装成功"
-   else
+   docker version >/dev/null
+   if [ $? -ne 0 ]; then
       log "docker 安装失败"
       exit 1
+   else
+      log "docker 安装成功"
    fi
 fi
 
 ##Install Latest Stable Docker Compose Release
-if which docker-compose >/dev/null; then
-   log "检测到 Docker Compose 已安装，跳过安装步骤"
-else
+docker-compose version >/dev/null
+if [ $? -ne 0 ]; then
    if [[ -d docker ]]; then
       log "... 离线安装 docker-compose"
       cp docker/bin/docker-compose /usr/bin/
@@ -134,12 +134,15 @@ else
       ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose
    fi
 
-   if which docker-compose >/dev/null; then
-      log "docker-compose 安装成功"
-   else
+   docker-compose version >/dev/null
+   if [ $? -ne 0 ]; then
       log "docker-compose 安装失败"
       exit 1
+   else
+      log "docker-compose 安装成功"
    fi
+else
+   log "检测到 Docker Compose 已安装，跳过安装步骤"
 fi
 
 export COMPOSE_HTTP_TIMEOUT=180
