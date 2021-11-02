@@ -18,6 +18,7 @@ compose_files="-f docker-compose.yml -f docker-compose-kettle-doris.yml"
 if [ -f /usr/bin/dectl ]; then
    # 获取已安装的 DataEase 的运行目录
    DE_BASE=`grep "^DE_BASE=" /usr/bin/dectl | cut -d'=' -f2`
+   dectl uninstall
 fi
 
 set -a
@@ -31,6 +32,10 @@ set +a
 DE_RUN_BASE=$DE_BASE/dataease
 conf_folder=${DE_RUN_BASE}/conf
 templates_folder=${DE_RUN_BASE}/templates
+mysql_container_name="mysql"
+if [ -f ${DE_RUN_BASE}/docker-compose-mysql.yml ]; then
+   mysql_container_name=`grep "container_name" ${DE_RUN_BASE}/docker-compose-mysql.yml | awk -F': ' '{print $2}'`
+fi
 
 echo -e "======================= 开始安装 =======================" 2>&1 | tee -a ${CURRENT_DIR}/install.log
 
@@ -46,8 +51,14 @@ mkdir -p ${DE_RUN_BASE}/data/fe
 mkdir -p ${DE_RUN_BASE}/data/be
 mkdir -p ${DE_RUN_BASE}/data/mysql
 
+DE_MYSQL_HOST_ORIGIN=$DE_MYSQL_HOST
+DE_MYSQL_PORT_ORIGIN=$DE_MYSQL_PORT
+
 if [ ${DE_EXTERNAL_MYSQL} = "false" ]; then
    compose_files="${compose_files} -f docker-compose-mysql.yml"
+   export DE_MYSQL_HOST=$mysql_container_name
+   export DE_MYSQL_PORT=3306
+   sed -i "s/^    container_name: mysql/    container_name: ${DE_MYSQL_HOST}/g" docker-compose-mysql.yml
 else
    sed -i -e "/^    depends_on/,+2d" docker-compose.yml
 fi
@@ -67,6 +78,8 @@ for i in ${templates_files[@]}; do
    fi
 done
 
+export DE_MYSQL_HOST=$DE_MYSQL_HOST_ORIGIN
+export DE_MYSQL_PORT=$DE_MYSQL_PORT_ORIGIN
 
 cd ${CURRENT_DIR}
 sed -i -e "s#DE_BASE=.*#DE_BASE=${DE_BASE}#g" dectl
