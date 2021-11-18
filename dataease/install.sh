@@ -209,6 +209,11 @@ if which firewall-cmd >/dev/null; then
    fi
 fi
 
+http_code=`curl -sILw "%{http_code}\n" http://localhost:${DE_PORT} -o /dev/null`
+if [[ $http_code == 200 ]];then
+   log "停止服务进行升级..."
+   dectl uninstall
+fi
 
 log "启动服务"
 cd ${DE_RUN_BASE} && docker-compose $compose_files up -d 2>&1 | tee -a ${CURRENT_DIR}/install.log
