@@ -13,7 +13,7 @@ function log() {
 args=$@
 os=`uname -a`
 docker_config_folder="/etc/docker"
-compose_files="-f docker-compose.yml -f docker-compose-kettle-doris.yml"
+compose_files="-f docker-compose.yml"
 
 if [ -f /usr/bin/dectl ]; then
    # 获取已安装的 DataEase 的运行目录
@@ -36,6 +36,49 @@ mysql_container_name="mysql"
 if [ -f ${DE_RUN_BASE}/docker-compose-mysql.yml ]; then
    mysql_container_name=`grep "container_name" ${DE_RUN_BASE}/docker-compose-mysql.yml | awk -F': ' '{print $2}'`
 fi
+
+dataease_conf=${conf_folder}/dataease.properties
+
+function prop {
+   [ -f "$1" ] | grep -P "^\s*[^#]?${2}=.*$" $1 | cut -d'=' -f2
+}
+
+if [[ -f $dataease_conf ]] && [[ ! ${DE_EXTERNAL_DORIS} ]]; then
+   export DE_DORIS_DB=$(prop $dataease_conf doris.db)
+   export DE_DORIS_USER=$(prop $dataease_conf doris.user)
+   export DE_DORIS_PASSWORD=$(prop $dataease_conf doris.password)
+   export DE_DORIS_HOST=$(prop $dataease_conf doris.host)
+   export DE_DORIS_PORT=$(prop $dataease_conf doris.port)
+   export DE_DORIS_HTTPPORT=$(prop $dataease_conf doris.httpPort)
+
+   if [ ${DE_DORIS_HOST} = "doris-fe" ]; then
+      export DE_EXTERNAL_DORIS="false"
+   else
+      export DE_EXTERNAL_DORIS="true"
+   fi
+fi
+
+if [ ${DE_EXTERNAL_DORIS} = "false" ]; then
+   compose_files="${compose_files} -f docker-compose-doris.yml"
+fi
+
+if [[ -f $dataease_conf ]] && [[ ! ${DE_EXTERNAL_KETTLE} ]]; then
+   export DE_CARTE_HOST=$(prop $dataease_conf carte.host)
+   export DE_CARTE_PORT=$(prop $dataease_conf carte.port)
+   export DE_CARTE_USER=$(prop $dataease_conf carte.user)
+   export DE_CARTE_PASSWORD=$(prop $dataease_conf carte.passwd)
+
+   if [ ${DE_CARTE_HOST} = "kettle" ]; then
+      export DE_EXTERNAL_KETTLE="false"
+   else
+      export DE_EXTERNAL_KETTLE="true"
+   fi
+fi
+
+if [ ${DE_EXTERNAL_KETTLE} = "false" ]; then
+   compose_files="${compose_files} -f docker-compose-kettle.yml"
+fi
+
 
 echo -e "======================= 开始安装 =======================" 2>&1 | tee -a ${CURRENT_DIR}/install.log
 
@@ -216,8 +259,7 @@ if [[ $http_code == 200 ]];then
 fi
 
 log "启动服务"
-cd ${DE_RUN_BASE} && docker-compose $compose_files up -d 2>&1 | tee -a ${CURRENT_DIR}/install.log
-
+dectl reload | tee -a ${CURRENT_DIR}/install.log
 dectl status 2>&1 | tee -a ${CURRENT_DIR}/install.log
 
 for b in {1..30}
@@ -236,7 +278,7 @@ do
 done
 
 if [[ $http_code != 200 ]];then
-   log "等待时间内未完全启动，请稍后使用 dectl status 检查服务运行状况。"
+   log "【警告】服务在等待时间内未完全启动！请稍后使用 dectl status 检查服务运行状况。"
 fi
 
 echo -e "======================= 安装完成 =======================\n" 2>&1 | tee -a ${CURRENT_DIR}/install.log

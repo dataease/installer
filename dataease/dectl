@@ -9,8 +9,17 @@ source ${DE_BASE}/dataease/.env
 
 export COMPOSE_HTTP_TIMEOUT=180
 
-compose_files="-f docker-compose.yml -f docker-compose-kettle-doris.yml"
-if [ ${DE_EXTERNAL_MYSQL} = "false" ]; then
+compose_files="-f docker-compose.yml"
+
+if [[ ! ${DE_EXTERNAL_KETTLE} ]] || [ ${DE_EXTERNAL_KETTLE} = "false" ]; then
+  compose_files="${compose_files} -f docker-compose-kettle.yml"
+fi
+
+if [[ ! ${DE_EXTERNAL_DORIS} ]] || [ ${DE_EXTERNAL_DORIS} = "false" ]; then
+  compose_files="${compose_files} -f docker-compose-doris.yml"
+fi
+
+if [[ ! ${DE_EXTERNAL_MYSQL} ]] || [ ${DE_EXTERNAL_MYSQL} = "false" ]; then
   compose_files="${compose_files} -f docker-compose-mysql.yml"
 fi
 
