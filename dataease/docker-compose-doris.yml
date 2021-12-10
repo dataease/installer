@@ -6,6 +6,7 @@ services:
     container_name: doris-fe
     environment:
       - DORIS_ROLE=fe-leader
+      - FORMAT_MESSAGES_PATTERN_DISABLE_LOOKUPS=true
     volumes:
       - ${DE_BASE}/dataease/data/fe:/opt/doris/fe/doris-meta
       - ${DE_BASE}/dataease/logs/fe:/opt/doris/fe/log
@@ -29,6 +30,7 @@ services:
     container_name: doris-be
     environment:
       - DORIS_ROLE=be
+      - FORMAT_MESSAGES_PATTERN_DISABLE_LOOKUPS=true
     volumes:
       - ${DE_BASE}/dataease/data/be:/opt/doris/be/storage
       - ${DE_BASE}/dataease/logs/be:/opt/doris/be/log
