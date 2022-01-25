@@ -2,7 +2,7 @@ version: '2.1'
 services:
 
   kettle:
-    image: registry.cn-qingdao.aliyuncs.com/dataease/kettle:8.3-v1.6
+    image: registry.cn-qingdao.aliyuncs.com/dataease/kettle:8.3-v1.7
     container_name: kettle
     environment:
       - PENTAHO_DI_JAVA_OPTIONS=-Xms1024m -Xmx4096m -XX:MaxPermSize=256m -Dfile.encoding=utf-8
