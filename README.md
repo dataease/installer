@@ -1,4 +1,4 @@
-# DataEase 离线包制作工程
+# DataEase 离线安装包制作工程
 
 本工程用来制作 DataEase 离线安装包。
 
