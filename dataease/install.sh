@@ -43,6 +43,10 @@ function prop {
    [ -f "$1" ] | grep -P "^\s*[^#]?${2}=.*$" $1 | cut -d'=' -f2
 }
 
+if [ "x${DE_ENGINE_MODE}" = "x" ]; then
+   export DE_ENGINE_MODE="local"
+fi
+
 if [[ -f $dataease_conf ]] && [[ ! ${DE_EXTERNAL_DORIS} ]]; then
    export DE_DORIS_DB=$(prop $dataease_conf doris.db)
    export DE_DORIS_USER=$(prop $dataease_conf doris.user)
@@ -58,7 +62,7 @@ if [[ -f $dataease_conf ]] && [[ ! ${DE_EXTERNAL_DORIS} ]]; then
    fi
 fi
 
-if [ ${DE_EXTERNAL_DORIS} = "false" ]; then
+if [ ${DE_EXTERNAL_DORIS} = "false" ] && [ ${DE_ENGINE_MODE} = "local" ]; then
    compose_files="${compose_files} -f docker-compose-doris.yml"
 fi
 
@@ -75,7 +79,7 @@ if [[ -f $dataease_conf ]] && [[ ! ${DE_EXTERNAL_KETTLE} ]]; then
    fi
 fi
 
-if [ ${DE_EXTERNAL_KETTLE} = "false" ]; then
+if [ ${DE_EXTERNAL_KETTLE} = "false" ] && [ ${DE_ENGINE_MODE} = "local" ]; then
    compose_files="${compose_files} -f docker-compose-kettle.yml"
 fi
 
@@ -206,6 +210,11 @@ cd ${CURRENT_DIR}
 if [[ -d images ]]; then
    log "加载镜像"
    for i in $(ls images); do
+      if [ ${DE_ENGINE_MODE} != "local" ]; then
+         if [[ $i =~ "doris" ]] || [[ $i =~ "kettle" ]]; then
+            continue      
+         fi
+      fi
       docker load -i images/$i 2>&1 | tee -a ${CURRENT_DIR}/install.log
    done
 else
