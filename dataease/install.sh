@@ -47,6 +47,11 @@ if [ "x${DE_ENGINE_MODE}" = "x" ]; then
    export DE_ENGINE_MODE="local"
 fi
 
+echo -e "*******************************************************\n" 2>&1 | tee -a ${CURRENT_DIR}/install.log
+echo -e " 当前部署模式为 ${DE_ENGINE_MODE}，如需切换模式，\n 请修改 $DE_BASE/dataease/.env 中的 DE_ENGINE_MODE 变量后，\n 重新执行 bash install.sh 即可\n" 2>&1 | tee -a ${CURRENT_DIR}/install.log
+echo -e "*******************************************************\n" 2>&1 | tee -a ${CURRENT_DIR}/install.log
+
+
 if [[ -f $dataease_conf ]] && [[ ! ${DE_EXTERNAL_DORIS} ]]; then
    export DE_DORIS_DB=$(prop $dataease_conf doris.db)
    export DE_DORIS_USER=$(prop $dataease_conf doris.user)
