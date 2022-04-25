@@ -102,6 +102,7 @@ mkdir -p ${DE_RUN_BASE}/data/kettle
 mkdir -p ${DE_RUN_BASE}/data/fe
 mkdir -p ${DE_RUN_BASE}/data/be
 mkdir -p ${DE_RUN_BASE}/data/mysql
+mkdir -p ${DE_RUN_BASE}/data/static-resource
 
 DE_MYSQL_HOST_ORIGIN=$DE_MYSQL_HOST
 DE_MYSQL_PORT_ORIGIN=$DE_MYSQL_PORT
@@ -217,7 +218,7 @@ if [[ -d images ]]; then
    for i in $(ls images); do
       if [ ${DE_ENGINE_MODE} != "local" ]; then
          if [[ $i =~ "doris" ]] || [[ $i =~ "kettle" ]]; then
-            continue      
+            continue
          fi
       fi
       docker load -i images/$i 2>&1 | tee -a ${CURRENT_DIR}/install.log
