@@ -26,5 +26,5 @@ networks:
     ipam:
       driver: default
       config:
-        - subnet: 172.19.0.0/16
-          gateway: 172.19.0.1
+        - subnet: ${DE_DOCKER_SUBNET}
+          gateway: ${DE_DOCKER_GATEWAY}
