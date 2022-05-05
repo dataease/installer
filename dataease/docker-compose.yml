@@ -12,6 +12,7 @@ services:
       - ${DE_BASE}/dataease/logs:/opt/dataease/logs
       - ${DE_BASE}/dataease/plugins/thirdpart:/opt/dataease/plugins/thirdpart
       - ${DE_BASE}/dataease/data/kettle:/opt/dataease/data/kettle
+      - ${DE_BASE}/dataease/data/static-resource:/opt/dataease/data/static-resource
     shm_size: 1gb
     depends_on:
       mysql:
@@ -25,5 +26,5 @@ networks:
     ipam:
       driver: default
       config:
-        - subnet: 172.19.0.0/16
-          gateway: 172.19.0.1
+        - subnet: ${DE_DOCKER_SUBNET}
+          gateway: ${DE_DOCKER_GATEWAY}

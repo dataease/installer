@@ -2,7 +2,7 @@ version: '2.1'
 services:
 
   doris-fe:
-    image: registry.cn-qingdao.aliyuncs.com/dataease/doris:0.15-0309
+    image: registry.cn-qingdao.aliyuncs.com/dataease/doris:v1.0.0-0424
     container_name: doris-fe
     environment:
       - DORIS_ROLE=fe-leader
@@ -13,7 +13,7 @@ services:
       - ${DE_BASE}/dataease/bin/doris:/docker-entrypoint-initdb.d/
     networks:
       dataease-network :
-        ipv4_address: 172.19.0.198
+        ipv4_address: ${DE_DORIS_FE_IP}
     restart: always
     depends_on:
       doris-be:
@@ -25,7 +25,7 @@ services:
       retries: 3
 
   doris-be:
-    image: registry.cn-qingdao.aliyuncs.com/dataease/doris:0.15-0309
+    image: registry.cn-qingdao.aliyuncs.com/dataease/doris:v1.0.0-0424
     container_name: doris-be
     environment:
       - DORIS_ROLE=be
@@ -35,7 +35,7 @@ services:
       - ${DE_BASE}/dataease/conf/be.conf:/opt/doris/be/conf/be.conf
     networks:
       dataease-network :
-        ipv4_address: 172.19.0.199
+        ipv4_address: ${DE_DORIS_BE_IP}
     restart: always
     healthcheck:
       test: [ "CMD-SHELL", "curl -sS 127.0.0.1:8040 || exit 1" ]

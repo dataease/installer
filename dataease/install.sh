@@ -47,6 +47,20 @@ if [ "x${DE_ENGINE_MODE}" = "x" ]; then
    export DE_ENGINE_MODE="local"
 fi
 
+if [ "x${DE_DOCKER_SUBNET}" = "x" ]; then
+   export DE_DOCKER_SUBNET=`grep "^[[:blank:]]*- subnet" ${DE_RUN_BASE}/docker-compose.yml | awk -F': ' '{print $2}'`
+fi
+
+if [ "x${DE_DOCKER_GATEWAY}" = "x" ]; then
+   export DE_DOCKER_GATEWAY=`grep "^[[:blank:]]*gateway" ${DE_RUN_BASE}/docker-compose.yml | awk -F': ' '{print $2}'`
+fi
+
+if [ "x${DE_DORIS_FE_IP}" = "x" ]; then
+   read DE_DORIS_FE_IP DE_DORIS_BE_IP <<< $(grep "^[[:blank:]]*ipv4_address" ${DE_RUN_BASE}/docker-compose-doris.yml | awk -F': ' '{print $2}')
+   export DE_DORIS_FE_IP
+   export DE_DORIS_BE_IP
+fi
+
 echo -e "*******************************************************\n" 2>&1 | tee -a ${CURRENT_DIR}/install.log
 echo -e " 当前部署模式为 ${DE_ENGINE_MODE}，如需切换模式，\n 请修改 $DE_BASE/dataease/.env 中的 DE_ENGINE_MODE 变量后，\n 重新执行 bash install.sh 即可\n" 2>&1 | tee -a ${CURRENT_DIR}/install.log
 echo -e "*******************************************************\n" 2>&1 | tee -a ${CURRENT_DIR}/install.log
@@ -102,6 +116,7 @@ mkdir -p ${DE_RUN_BASE}/data/kettle
 mkdir -p ${DE_RUN_BASE}/data/fe
 mkdir -p ${DE_RUN_BASE}/data/be
 mkdir -p ${DE_RUN_BASE}/data/mysql
+mkdir -p ${DE_RUN_BASE}/data/static-resource
 
 DE_MYSQL_HOST_ORIGIN=$DE_MYSQL_HOST
 DE_MYSQL_PORT_ORIGIN=$DE_MYSQL_PORT
@@ -217,7 +232,7 @@ if [[ -d images ]]; then
    for i in $(ls images); do
       if [ ${DE_ENGINE_MODE} != "local" ]; then
          if [[ $i =~ "doris" ]] || [[ $i =~ "kettle" ]]; then
-            continue      
+            continue
          fi
       fi
       docker load -i images/$i 2>&1 | tee -a ${CURRENT_DIR}/install.log
