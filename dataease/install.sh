@@ -56,8 +56,12 @@ if [ "x${DE_DOCKER_GATEWAY}" = "x" ]; then
 fi
 
 if [ "x${DE_DORIS_FE_IP}" = "x" ]; then
-   read DE_DORIS_FE_IP DE_DORIS_BE_IP <<< $(grep "^[[:blank:]]*ipv4_address" ${DE_RUN_BASE}/docker-compose-doris.yml | awk -F': ' '{print $2}')
+   DE_DORIS_FE_IP=`grep "^[[:blank:]]*ipv4_address" ${DE_RUN_BASE}/docker-compose-doris.yml | awk -F': ' '{print $2}' | head -n 1`
    export DE_DORIS_FE_IP
+fi
+
+if [ "x${DE_DORIS_BE_IP}" = "x" ]; then
+   DE_DORIS_BE_IP=`grep "^[[:blank:]]*ipv4_address" ${DE_RUN_BASE}/docker-compose-doris.yml | awk -F': ' '{print $2}' | tail -n 1`
    export DE_DORIS_BE_IP
 fi
 
