@@ -110,7 +110,7 @@ function upgrade() {
       fi
    done
 
-   if [ 'x${server_url}' == 'x' ];then
+   if [ "x${server_url}" == "x" ];then
        echo "没有找到稳定的下载服务器，请稍候重试"
        exit 1
    fi
