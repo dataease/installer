@@ -13,6 +13,7 @@ services:
       - ${DE_BASE}/dataease/plugins/thirdpart:/opt/dataease/plugins/thirdpart
       - ${DE_BASE}/dataease/data/kettle:/opt/dataease/data/kettle
       - ${DE_BASE}/dataease/data/static-resource:/opt/dataease/data/static-resource
+      - ${DE_BASE}/dataease/custom-drivers:/opt/dataease/custom-drivers
     shm_size: 1gb
     depends_on:
       mysql:
