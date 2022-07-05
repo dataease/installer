@@ -2,7 +2,7 @@ version: '2.1'
 services:
 
   doris-fe:
-    image: registry.cn-qingdao.aliyuncs.com/dataease/doris:v1.0.0-0424
+    image: registry.cn-qingdao.aliyuncs.com/dataease/doris:v1.1.0-0704
     container_name: doris-fe
     environment:
       - DORIS_ROLE=fe-leader
@@ -25,7 +25,7 @@ services:
       retries: 3
 
   doris-be:
-    image: registry.cn-qingdao.aliyuncs.com/dataease/doris:v1.0.0-0424
+    image: registry.cn-qingdao.aliyuncs.com/dataease/doris:v1.1.0-0704
     container_name: doris-be
     environment:
       - DORIS_ROLE=be
