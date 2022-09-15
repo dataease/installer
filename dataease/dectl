@@ -33,19 +33,60 @@ function usage() {
    echo "  ./dectl --help"
    echo
    echo "Commands: "
-   echo "  status    查看 DATAEASE 服务运行状态"
-   echo "  start     启动 DATAEASE 服务"
-   echo "  stop      停止 DATAEASE 服务"
-   echo "  restart   重启 DATAEASE 服务"
-   echo "  reload    重新加载 DATAEASE 服务"
-   echo "  uninstall 卸载 DATAEASE 服务"
-   echo "  upgrade   升级 DATAEASE 服务"
-   echo "  version   查看 DATAEASE 版本信息"
+   echo "  status       查看 DATAEASE 服务运行状态"
+   echo "  start        启动 DATAEASE 服务"
+   echo "  stop         停止 DATAEASE 服务"
+   echo "  restart      重启 DATAEASE 服务"
+   echo "  reload       重新加载 DATAEASE 服务"
+   echo "  uninstall    卸载 DATAEASE 服务"
+   echo "  upgrade      升级 DATAEASE 服务"
+   echo "  version      查看 DATAEASE 版本信息"
+   echo "  clear-images 清理 DATAEASE 旧版本的相关镜像"
+   echo "  clear-logs   清理 DATAEASE 历史日志以及 Doris 临时日志"
 }
 
 function status() {
    echo
+   echo "DataEase 容器运行状态"
    cd ${DE_BASE}/dataease; docker-compose ${compose_files} ps
+   
+   echo
+   docker_root_dir=`docker info | grep "Docker Root Dir"  | awk -F': ' '{print $2}'`
+   echo "Docker 目录及文件大小 : " 
+   du -sh $docker_root_dir
+   echo
+   echo "Docker 目录所在磁盘使用情况 : " 
+   df -H $docker_root_dir
+
+   echo
+   echo "日志文件大小 : "
+   du -Sh ${DE_BASE}/dataease/logs/
+
+   echo
+   echo "DataEase 运行目录及文件大小 : " 
+   du -sh ${DE_BASE}
+   echo
+   echo "DataEase 运行目录使用情况 : " 
+   df -H ${DE_BASE}
+   
+   echo
+   read available_disk percent_disk<<< `df -H --output=avail,pcent /opt | tail -1`
+   available_disk=${available_disk%?}
+   percent_disk=${percent_disk%?}
+   if [[ $available_disk -lt 2 ]] && [[ $percent_disk -gt 85 ]];then
+      echo -e "\033[31m[警告] DataEase 运行目录所在磁盘剩余空间不足 2G 且磁盘使用率超过 85%，Apache Doris 可能无法正常启动!\033[0m"
+   fi
+
+   echo
+   http_code=`curl -sILw "%{http_code}\n" http://localhost:${DE_PORT} -o /dev/null`
+   if [[ $http_code == 000 ]];then
+      echo "DataEase 服务状态 : 正在启动"
+   elif [[ $http_code == 200 ]];then
+      echo "DataEase 服务状态 : 正常运行"
+   else
+      echo -e "DataEase 服务状态 : \033[31m无法访问\033[0m"
+   fi
+   echo
 }
 function start() {
    echo
@@ -69,12 +110,50 @@ function uninstall() {
 }
 function version() {
    echo
-   cat ${DE_BASE}/dataease/conf/version
+   de_version=`grep "^    image:.*/dataease:" ${DE_BASE}/dataease/docker-compose.yml | awk -F'dataease:' '{print $2}'`
+   echo $de_version
+}
+function _clear_component_docker_images() {
+   component=$1
+   compose_file=${DE_BASE}/dataease/docker-compose-${component}.yml
+   if [ $1 = "dataease" ];then
+      compose_file=${DE_BASE}/dataease/docker-compose.yml
+   fi
+   component_image_defined=$(grep "^    image:.*/$component:" ${compose_file} | uniq)
+   component_version=$(echo ${component_image_defined} | awk -F"${component}:" '{print $2}' | uniq)
+   component_image=$(echo ${component_image_defined} | awk -F'image: ' '{print $2}' | awk -F':' '{print $1}')
+
+   echo "清理${component}镜像"
+   docker rmi `docker images | grep "dataease" | grep "$component_image" | grep -v " $component_version " | awk -F' ' '{print $1":"$2}'`
+   echo "清理完毕"
+}
+function clear_images() {
+   echo
+   _clear_component_docker_images 'dataease'
+   _clear_component_docker_images 'doris'
+   _clear_component_docker_images 'kettle'
+   _clear_component_docker_images 'mysql'
+}
+function clear_logs() {
+   echo "开始清理 DataEase 历史日志"
+   rm -rf ${DE_BASE}/dataease/logs/dataease/history/*
+   echo "清理完毕"
+
+   echo "开始清理 Apache Doris FE 日志"
+   rm -rf ${DE_BASE}/dataease/logs/fe/fe.gc.log.*
+   echo "" > ${DE_BASE}/dataease/logs/fe/fe.out
+   echo "清理完毕"   
+
+   echo "开始清理 Apache Doris BE 日志"
+   echo "" > ${DE_BASE}/dataease/logs/be/be.INFO
+   echo "" > ${DE_BASE}/dataease/logs/be/be.WARNING
+   echo "" > ${DE_BASE}/dataease/logs/be/be.out
+   echo "清理完毕"
 }
 function upgrade() {
    echo
    latest_version=`curl -s https://api.github.com/repos/dataease/dataease/releases/latest | grep -e "\"tag_name\"" | sed -r 's/.*: "(.*)",/\1/'`
-   current_version=$(cat ${DE_BASE}/dataease/conf/version)
+   current_version=`grep "^    image:.*/dataease:" ${DE_BASE}/dataease/docker-compose.yml | awk -F'dataease:' '{print $2}'`
 
    if [ "${latest_version}" = "" ];then
       echo "未获取到最新版本"
@@ -166,6 +245,12 @@ function main() {
          ;;
       version)
          version
+         ;;
+      clear-images)
+         clear_images
+         ;;
+      clear-logs)
+         clear_logs
          ;;
       help)
          usage
