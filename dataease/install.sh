@@ -146,7 +146,7 @@ cd ${templates_folder}
 templates_files=( dataease.properties mysql.env )
 for i in ${templates_files[@]}; do
    if [ -f $i ]; then
-      envsubst < $i > $conf_folder/$i
+      envsubst < $i > $conf_folder/$i  > /dev/null || exit 1
    fi
 done
 
