@@ -122,6 +122,7 @@ mkdir -p ${DE_RUN_BASE}/data/be
 mkdir -p ${DE_RUN_BASE}/data/mysql
 mkdir -p ${DE_RUN_BASE}/data/static-resource
 mkdir -p ${DE_RUN_BASE}/custom-drivers
+mkdir -p ${DE_RUN_BASE}/data/business
 
 DE_MYSQL_HOST_ORIGIN=$DE_MYSQL_HOST
 DE_MYSQL_PORT_ORIGIN=$DE_MYSQL_PORT
