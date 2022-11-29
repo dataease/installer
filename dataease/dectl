@@ -44,7 +44,18 @@ function usage() {
    echo "  clear-images 清理 DATAEASE 旧版本的相关镜像"
    echo "  clear-logs   清理 DATAEASE 历史日志以及 Doris 临时日志"
 }
-
+function _healthcheck() {
+   echo
+   http_code=`curl -sILw "%{http_code}\n" http://localhost:${DE_PORT} -o /dev/null`
+   if [[ $http_code == 000 ]];then
+      echo "DataEase 服务状态 : 正在启动"
+   elif [[ $http_code == 200 ]];then
+      echo "DataEase 服务状态 : 正常运行"
+   else
+      echo -e "DataEase 服务状态 : \033[31m无法访问\033[0m"
+   fi
+   echo
+}
 function status() {
    echo
    echo "DataEase 容器运行状态"
@@ -70,27 +81,19 @@ function status() {
    df -H ${DE_BASE}
    
    echo
-   read available_disk percent_disk<<< `df -H --output=avail,pcent /opt | tail -1`
+   read available_disk percent_disk<<< `df -H --output=avail,pcent ${DE_BASE} | tail -1`
    available_disk=${available_disk%?}
    percent_disk=${percent_disk%?}
-   if [[ $available_disk -lt 2 ]] && [[ $percent_disk -gt 85 ]];then
+   if [[ $available_disk < 2.0 ]] && [[ $percent_disk > 85 ]];then
       echo -e "\033[31m[警告] DataEase 运行目录所在磁盘剩余空间不足 2G 且磁盘使用率超过 85%，Apache Doris 可能无法正常启动!\033[0m"
    fi
 
-   echo
-   http_code=`curl -sILw "%{http_code}\n" http://localhost:${DE_PORT} -o /dev/null`
-   if [[ $http_code == 000 ]];then
-      echo "DataEase 服务状态 : 正在启动"
-   elif [[ $http_code == 200 ]];then
-      echo "DataEase 服务状态 : 正常运行"
-   else
-      echo -e "DataEase 服务状态 : \033[31m无法访问\033[0m"
-   fi
-   echo
+   _healthcheck
 }
 function start() {
    echo
    cd ${DE_BASE}/dataease; docker-compose ${compose_files} start ${target}
+   _healthcheck
 }
 function stop() {
    echo
@@ -99,10 +102,12 @@ function stop() {
 function restart() {
    echo
    cd ${DE_BASE}/dataease; docker-compose ${compose_files} restart ${target}
+   _healthcheck
 }
 function reload() {
    echo
    cd ${DE_BASE}/dataease; docker-compose ${compose_files} up -d
+   _healthcheck
 }
 function uninstall() {
    echo
