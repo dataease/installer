@@ -280,7 +280,7 @@ fi
 if which firewall-cmd >/dev/null; then
    if systemctl is-active firewalld &>/dev/null ;then
       log "防火墙端口开放"
-      firewall-cmd --zone=public --add-port=80/tcp --permanent
+      firewall-cmd --zone=public --add-port=${DE_PORT}/tcp --permanent
       firewall-cmd --reload
    else
       log "防火墙未开启，忽略端口开放"
