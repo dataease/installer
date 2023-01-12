@@ -265,16 +265,19 @@ if [ -f /etc/rc.d/rc.local ];then
    chmod +x /etc/rc.d/rc.local
 fi
 
-if [ `grep "vm.max_map_count" /etc/sysctl.conf | wc -l` -eq 0 ];then
-   sysctl -w vm.max_map_count=262144
-   echo "vm.max_map_count=262144" >> /etc/sysctl.conf
+if [[ `grep "vm.max_map_count" /etc/sysctl.conf | wc -l` -eq 0 ]];then
+   sysctl -w vm.max_map_count=2000000
+   echo "vm.max_map_count=2000000" >> /etc/sysctl.conf
+elif (( `grep "vm.max_map_count" /etc/sysctl.conf | awk -F'=' '{print $2}'` < 2000000 ));then
+   sysctl -w vm.max_map_count=2000000
+   sed -i 's/^vm\.max_map_count.*/vm\.max_map_count=2000000/' /etc/sysctl.conf
 fi
 
 if [ `grep "net.ipv4.ip_forward" /etc/sysctl.conf | wc -l` -eq 0 ];then
    sysctl -w net.ipv4.ip_forward=1
    echo "net.ipv4.ip_forward=1" >> /etc/sysctl.conf
 else
-   sed -i '/net.ipv4.ip_forward/ s/\(.*= \).*/\11/' /etc/sysctl.conf
+   sed -i 's/^net\.ipv4\.ip_forward.*/net\.ipv4\.ip_forward=1/' /etc/sysctl.conf
 fi
 
 if which firewall-cmd >/dev/null; then
