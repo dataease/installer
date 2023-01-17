@@ -208,7 +208,12 @@ fi
 ##Install Latest Stable Docker Compose Release
 docker-compose version >/dev/null
 if [ $? -ne 0 ]; then
-   if [[ -d docker ]]; then
+   docker compose version >/dev/null
+   if [ $? -eq 0 ]; then      
+      log "... 使用已安装 docker compose v2"
+      echo 'docker compose "$@"' > /usr/bin/docker-compose
+      chmod +x /usr/bin/docker-compose
+   elif [[ -d docker ]]; then
       log "... 离线安装 docker-compose"
       cp docker/bin/docker-compose /usr/bin/
       chmod +x /usr/bin/docker-compose
