@@ -11,13 +11,13 @@ function log() {
 }
 
 args=$@
-os=`uname -a`
+os=$(uname -a)
 docker_config_folder="/etc/docker"
 compose_files="-f docker-compose.yml"
 
 if [ -f /usr/bin/dectl ]; then
    # 获取已安装的 DataEase 的运行目录
-   DE_BASE=`grep "^DE_BASE=" /usr/bin/dectl | cut -d'=' -f2`
+   DE_BASE=$(grep "^DE_BASE=" /usr/bin/dectl | cut -d'=' -f2)
    dectl uninstall
 fi
 
@@ -34,7 +34,7 @@ conf_folder=${DE_RUN_BASE}/conf
 templates_folder=${DE_RUN_BASE}/templates
 mysql_container_name="mysql"
 if [ -f ${DE_RUN_BASE}/docker-compose-mysql.yml ]; then
-   mysql_container_name=`grep "container_name" ${DE_RUN_BASE}/docker-compose-mysql.yml | awk -F': ' '{print $2}'`
+   mysql_container_name=$(grep "container_name" ${DE_RUN_BASE}/docker-compose-mysql.yml | awk -F': ' '{print $2}')
 fi
 
 dataease_conf=${conf_folder}/dataease.properties
@@ -48,20 +48,20 @@ if [ "x${DE_ENGINE_MODE}" = "x" ]; then
 fi
 
 if [ "x${DE_DOCKER_SUBNET}" = "x" ]; then
-   export DE_DOCKER_SUBNET=`grep "^[[:blank:]]*- subnet" ${DE_RUN_BASE}/docker-compose.yml | awk -F': ' '{print $2}'`
+   export DE_DOCKER_SUBNET=$(grep "^[[:blank:]]*- subnet" ${DE_RUN_BASE}/docker-compose.yml | awk -F': ' '{print $2}')
 fi
 
 if [ "x${DE_DOCKER_GATEWAY}" = "x" ]; then
-   export DE_DOCKER_GATEWAY=`grep "^[[:blank:]]*gateway" ${DE_RUN_BASE}/docker-compose.yml | awk -F': ' '{print $2}'`
+   export DE_DOCKER_GATEWAY=$(grep "^[[:blank:]]*gateway" ${DE_RUN_BASE}/docker-compose.yml | awk -F': ' '{print $2}')
 fi
 
 if [ "x${DE_DORIS_FE_IP}" = "x" ]; then
-   DE_DORIS_FE_IP=`grep "^[[:blank:]]*ipv4_address" ${DE_RUN_BASE}/docker-compose-doris.yml | awk -F': ' '{print $2}' | head -n 1`
+   DE_DORIS_FE_IP=$(grep "^[[:blank:]]*ipv4_address" ${DE_RUN_BASE}/docker-compose-doris.yml | awk -F': ' '{print $2}' | head -n 1)
    export DE_DORIS_FE_IP
 fi
 
 if [ "x${DE_DORIS_BE_IP}" = "x" ]; then
-   DE_DORIS_BE_IP=`grep "^[[:blank:]]*ipv4_address" ${DE_RUN_BASE}/docker-compose-doris.yml | awk -F': ' '{print $2}' | tail -n 1`
+   DE_DORIS_BE_IP=$(grep "^[[:blank:]]*ipv4_address" ${DE_RUN_BASE}/docker-compose-doris.yml | awk -F': ' '{print $2}' | tail -n 1)
    export DE_DORIS_BE_IP
 fi
 
@@ -186,7 +186,7 @@ else
       systemctl enable docker; systemctl daemon-reload; service docker start 2>&1 | tee -a ${CURRENT_DIR}/install.log
    else
       log "... 在线安装 docker"
-      curl -fsSL https://get.docker.com -o get-docker.sh 2>&1 | tee -a ${CURRENT_DIR}/install.log
+      curl -fsSL https://get.daocloud.io/docker -o get-docker.sh 2>&1 | tee -a ${CURRENT_DIR}/install.log
       sudo sh get-docker.sh 2>&1 | tee -a ${CURRENT_DIR}/install.log
       log "... 启动 docker"
       systemctl enable docker; systemctl daemon-reload; service docker start 2>&1 | tee -a ${CURRENT_DIR}/install.log
@@ -214,7 +214,7 @@ if [ $? -ne 0 ]; then
       chmod +x /usr/bin/docker-compose
    else
       log "... 在线安装 docker-compose"
-      curl -L https://get.daocloud.io/docker/compose/releases/download/1.29.2/docker-compose-`uname -s`-`uname -m` -o /usr/local/bin/docker-compose 2>&1 | tee -a ${CURRENT_DIR}/install.log
+      curl -L https://get.daocloud.io/docker/compose/releases/download/v2.2.3/docker-compose-$(uname -s)-$(uname -m) -o /usr/local/bin/docker-compose 2>&1 | tee -a ${CURRENT_DIR}/install.log
       chmod +x /usr/local/bin/docker-compose
       ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose
    fi
@@ -257,7 +257,7 @@ if which chkconfig;then
 fi
 
 if [ -f /etc/rc.d/rc.local ];then
-   dataeaseService=`grep "service dataease start" /etc/rc.d/rc.local | wc -l`
+   dataeaseService=$(grep "service dataease start" /etc/rc.d/rc.local | wc -l)
    if [ "$dataeaseService" -eq 0 ]; then
       echo "sleep 10" >> /etc/rc.d/rc.local
       echo "service dataease start" >> /etc/rc.d/rc.local
@@ -265,16 +265,19 @@ if [ -f /etc/rc.d/rc.local ];then
    chmod +x /etc/rc.d/rc.local
 fi
 
-if [ `grep "vm.max_map_count" /etc/sysctl.conf | wc -l` -eq 0 ];then
-   sysctl -w vm.max_map_count=262144
-   echo "vm.max_map_count=262144" >> /etc/sysctl.conf
+if [[ $(grep "vm.max_map_count" /etc/sysctl.conf | wc -l) -eq 0 ]];then
+   sysctl -w vm.max_map_count=2000000
+   echo "vm.max_map_count=2000000" >> /etc/sysctl.conf
+elif (( $(grep "vm.max_map_count" /etc/sysctl.conf | awk -F'=' '{print $2}') < 2000000 ));then
+   sysctl -w vm.max_map_count=2000000
+   sed -i 's/^vm\.max_map_count.*/vm\.max_map_count=2000000/' /etc/sysctl.conf
 fi
 
-if [ `grep "net.ipv4.ip_forward" /etc/sysctl.conf | wc -l` -eq 0 ];then
+if [ $(grep "net.ipv4.ip_forward" /etc/sysctl.conf | wc -l) -eq 0 ];then
    sysctl -w net.ipv4.ip_forward=1
    echo "net.ipv4.ip_forward=1" >> /etc/sysctl.conf
 else
-   sed -i '/net.ipv4.ip_forward/ s/\(.*= \).*/\11/' /etc/sysctl.conf
+   sed -i 's/^net\.ipv4\.ip_forward.*/net\.ipv4\.ip_forward=1/' /etc/sysctl.conf
 fi
 
 if which firewall-cmd >/dev/null; then
@@ -287,7 +290,7 @@ if which firewall-cmd >/dev/null; then
    fi
 fi
 
-http_code=`curl -sILw "%{http_code}\n" http://localhost:${DE_PORT} -o /dev/null`
+http_code=$(curl -sILw "%{http_code}\n" http://localhost:${DE_PORT} -o /dev/null)
 if [[ $http_code == 200 ]];then
    log "停止服务进行升级..."
    dectl uninstall
@@ -300,7 +303,7 @@ dectl status 2>&1 | tee -a ${CURRENT_DIR}/install.log
 for b in {1..30}
 do
    sleep 3
-   http_code=`curl -sILw "%{http_code}\n" http://localhost:${DE_PORT} -o /dev/null`
+   http_code=$(curl -sILw "%{http_code}\n" http://localhost:${DE_PORT} -o /dev/null)
    if [[ $http_code == 000 ]];then
       log "服务启动中，请稍候 ..."
    elif [[ $http_code == 200 ]];then
