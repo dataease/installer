@@ -47,6 +47,11 @@ else
 	DEVERSION=$(curl -s https://api.github.com/repos/${owner}/${repo}/releases/latest | grep -e "\"tag_name\"" | sed -r 's/.*: "(.*)",/\1/')	
 fi
 
+if [[ "x${DEVERSION}" == "x" ]];then
+    echo "获取最新版本失败，请稍候重试"
+    exit 1
+fi
+
 echo "开始下载 DataEase ${DEVERSION} 版本在线安装包"
 dataease_online_file_name="dataease-${DEVERSION}-online.tar.gz"
 download_url="https://${server_url}/${owner}/${repo}/releases/download/${DEVERSION}/${dataease_online_file_name}"
