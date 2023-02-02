@@ -40,7 +40,8 @@ if [[ "${server_url}" == "gitee.com" ]];then
     owner='fit2cloud-feizhiyun'
     repo='DataEase'
     gitee_release_content=$(curl -s https://gitee.com/api/v5/repos/${owner}/${repo}/releases/latest)
-    DEVERSION=$($py_cmd -c "import json; obj=json.loads('$gitee_release_content'); print(obj['tag_name']);")
+    export LC_ALL="en_US.utf8"
+    DEVERSION=$($py_cmd -c "import json; obj=json.loads('$gitee_release_content', strict=False); print(obj['tag_name']);")
 else
 	owner='dataease'
 	repo='dataease'
