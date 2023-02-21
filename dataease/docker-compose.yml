@@ -16,6 +16,7 @@ services:
       - ${DE_BASE}/dataease/custom-drivers:/opt/dataease/custom-drivers
       - ${DE_BASE}/dataease/data/custom:/opt/dataease/data/custom
       - ${DE_BASE}/dataease/data/business:/opt/dataease/data/business
+      - ${DE_BASE}/dataease/data/ehcache:/opt/dataease/data/ehcache
     shm_size: 1gb
     depends_on:
       mysql:
