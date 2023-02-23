@@ -44,24 +44,21 @@ function usage() {
    echo "  clear-images 清理 DATAEASE 旧版本的相关镜像"
    echo "  clear-logs   清理 DATAEASE 历史日志以及 Doris 临时日志"
 }
-function _check() {
-   http_code=$(curl -sILw "%{http_code}\n" http://localhost:${DE_PORT} -o /dev/null)
-   if [[ $http_code == 000 ]];then
-      echo "DataEase 服务状态 : 正在启动"
-   elif [[ $http_code == 200 ]];then
-      echo "DataEase 服务状态 : 正常运行"
-      break;
-   else
-      echo -e "DataEase 服务状态 : \033[31m无法访问\033[0m"
-      exit 1
-   fi
-}
 function _healthcheck() {
    echo
    for b in {1..30}
    do
       sleep 3
-      _check
+      http_code=$(curl -sILw "%{http_code}\n" http://localhost:${DE_PORT} -o /dev/null)
+      if [[ $http_code == 000 ]];then
+         echo "DataEase 服务状态 : 正在启动"
+      elif [[ $http_code == 200 ]];then
+         echo "DataEase 服务状态 : 正常运行"
+         break;
+      else
+         echo -e "DataEase 服务状态 : \033[31m无法访问\033[0m"
+         exit 1
+      fi
    done
    echo
 }
@@ -97,7 +94,7 @@ function status() {
       echo -e "\033[31m[警告] DataEase 运行目录所在磁盘剩余空间不足 2G 且磁盘使用率超过 85%，Apache Doris 可能无法正常启动!\033[0m"
    fi
 
-   _check
+   _healthcheck
 }
 function start() {
    echo
