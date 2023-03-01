@@ -74,5 +74,3 @@ fi
 cd dataease-${DEVERSION}-online
 
 /bin/bash install.sh
-
-curl -sfL https://resource.fit2cloud.com/installation-log.sh | sh -s de install ${DEVERSION}

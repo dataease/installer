@@ -15,17 +15,21 @@ os=$(uname -a)
 docker_config_folder="/etc/docker"
 compose_files="-f docker-compose.yml"
 
+INSTALL_TYPE='install'
 if [ -f /usr/bin/dectl ]; then
    # 获取已安装的 DataEase 的运行目录
    DE_BASE=$(grep "^DE_BASE=" /usr/bin/dectl | cut -d'=' -f2)
    dectl uninstall
+   INSTALL_TYPE='upgrade'
 fi
 
 set -a
 if [[ $DE_BASE ]] && [[ -f $DE_BASE/dataease/.env ]]; then
    source $DE_BASE/dataease/.env
+   INSTALL_TYPE='upgrade'
 else
    source ${CURRENT_DIR}/install.conf
+   INSTALL_TYPE='install'
 fi
 set +a
 
@@ -220,7 +224,7 @@ if [ $? -ne 0 ]; then
       chmod +x /usr/bin/docker-compose
    else
       log "... 在线安装 docker-compose"
-      curl -L https://get.daocloud.io/docker/compose/releases/download/v2.2.3/docker-compose-$(uname -s)-$(uname -m) -o /usr/local/bin/docker-compose 2>&1 | tee -a ${CURRENT_DIR}/install.log
+      curl -L https://get.daocloud.io/docker/compose/releases/download/v2.16.0/docker-compose-$(uname -s)-$(uname -m) -o /usr/local/bin/docker-compose 2>&1 | tee -a ${CURRENT_DIR}/install.log
       chmod +x /usr/local/bin/docker-compose
       ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose
    fi
@@ -252,6 +256,9 @@ if [[ -d images ]]; then
 else
    log "拉取镜像"
    cd ${DE_RUN_BASE} && docker-compose $compose_files pull 2>&1
+
+   DEVERSION=$(cat ${CURRENT_DIR}/dataease/templates/version)
+   curl -sfL https://resource.fit2cloud.com/installation-log.sh | sh -s de ${INSTALL_TYPE} ${DEVERSION}
    cd -
 fi
 

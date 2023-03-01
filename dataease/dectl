@@ -256,8 +256,6 @@ function upgrade() {
    cd dataease-${latest_version}-online
    /bin/bash install.sh
 
-   curl -sfL https://resource.fit2cloud.com/installation-log.sh | sh -s de upgrade ${latest_version}
-
    cd ..
    rm -rf /tmp/dataease-${latest_version}-online
 }
@@ -302,6 +300,7 @@ function main() {
          ;;
       *)
          echo "不支持的参数，请使用 help 或 --help 参数获取帮助"
+         ;;
     esac
 }
 main
