@@ -79,7 +79,9 @@ echo -e "*******************************************************\n" 2>&1 | tee -
 echo -e " 当前部署模式为 ${DE_ENGINE_MODE}，如需切换模式，\n 请修改 $DE_BASE/dataease/.env 中的 DE_ENGINE_MODE 变量后，\n 重新执行 bash install.sh 即可\n" 2>&1 | tee -a ${CURRENT_DIR}/install.log
 echo -e "*******************************************************\n" 2>&1 | tee -a ${CURRENT_DIR}/install.log
 
-DE_LOGIN_TIMEOUT=$(prop $dataease_conf dataease.login_timeout)
+if [[ -f $dataease_conf ]]; then
+   DE_LOGIN_TIMEOUT=$(prop $dataease_conf dataease.login_timeout)
+fi
 export DE_LOGIN_TIMEOUT=$([[ -z $DE_LOGIN_TIMEOUT ]] && echo -n 480 || echo -n $DE_LOGIN_TIMEOUT)
 
 if [[ -f $dataease_conf ]] && [[ ! ${DE_EXTERNAL_DORIS} ]]; then
