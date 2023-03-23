@@ -200,7 +200,11 @@ else
       systemctl enable docker; systemctl daemon-reload; service docker start 2>&1 | tee -a ${CURRENT_DIR}/install.log
    else
       log "... 在线安装 docker"
-      curl -fsSL https://get.daocloud.io/docker -o get-docker.sh 2>&1 | tee -a ${CURRENT_DIR}/install.log
+      curl -fsSL https://resource.fit2cloud.com/get-docker-linux.sh -o get-docker.sh 2>&1 | tee -a ${CURRENT_DIR}/install.log
+      if [[ ! -f get-docker.sh ]];then
+         log "docker 在线安装脚本下载失败，请稍候重试"
+         exit 1
+      fi
       sudo sh get-docker.sh 2>&1 | tee -a ${CURRENT_DIR}/install.log
       log "... 启动 docker"
       systemctl enable docker; systemctl daemon-reload; service docker start 2>&1 | tee -a ${CURRENT_DIR}/install.log
@@ -228,7 +232,11 @@ if [ $? -ne 0 ]; then
       chmod +x /usr/bin/docker-compose
    else
       log "... 在线安装 docker-compose"
-      curl -L https://get.daocloud.io/docker/compose/releases/download/v2.16.0/docker-compose-$(uname -s)-$(uname -m) -o /usr/local/bin/docker-compose 2>&1 | tee -a ${CURRENT_DIR}/install.log
+      curl -L https://resource.fit2cloud.com/docker/compose/releases/download/v2.16.0/docker-compose-$(uname -s | tr A-Z a-z)-$(uname -m) -o /usr/local/bin/docker-compose 2>&1 | tee -a ${CURRENT_DIR}/install.log
+      if [[ ! -f /usr/local/bin/docker-compose ]];then
+         log "docker-compose 下载失败，请稍候重试"
+         exit 1
+      fi
       chmod +x /usr/local/bin/docker-compose
       ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose
    fi
