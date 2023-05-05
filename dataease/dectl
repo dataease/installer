@@ -11,6 +11,14 @@ export COMPOSE_HTTP_TIMEOUT=180
 
 compose_files="-f docker-compose.yml"
 
+compose_cmd="docker-compose"
+
+docker compose version >/dev/null
+if [ $? -eq 0 ]; then
+   compose_cmd="docker compose"
+fi
+
+
 if [ "${DE_ENGINE_MODE}" = "local" ]; then
    if [[ ! ${DE_EXTERNAL_KETTLE} ]] || [ ${DE_EXTERNAL_KETTLE} = "false" ]; then
      compose_files="${compose_files} -f docker-compose-kettle.yml"
@@ -65,7 +73,7 @@ function _healthcheck() {
 function status() {
    echo
    echo "DataEase 容器运行状态"
-   cd ${DE_BASE}/dataease; docker-compose ${compose_files} ps
+   cd ${DE_BASE}/dataease; ${compose_cmd} ${compose_files} ps
    
    echo
    docker_root_dir=$(docker info | grep "Docker Root Dir"  | awk -F': ' '{print $2}')
@@ -98,26 +106,26 @@ function status() {
 }
 function start() {
    echo
-   cd ${DE_BASE}/dataease; docker-compose ${compose_files} start ${target}
+   cd ${DE_BASE}/dataease; ${compose_cmd} ${compose_files} start ${target}
    _healthcheck
 }
 function stop() {
    echo
-   cd ${DE_BASE}/dataease; docker-compose ${compose_files} stop ${target}
+   cd ${DE_BASE}/dataease; ${compose_cmd} ${compose_files} stop ${target}
 }
 function restart() {
    echo
-   cd ${DE_BASE}/dataease; docker-compose ${compose_files} restart ${target}
+   cd ${DE_BASE}/dataease; ${compose_cmd} ${compose_files} restart ${target}
    _healthcheck
 }
 function reload() {
    echo
-   cd ${DE_BASE}/dataease; docker-compose ${compose_files} up -d
+   cd ${DE_BASE}/dataease; ${compose_cmd} ${compose_files} up -d
    _healthcheck
 }
 function uninstall() {
    echo
-   cd ${DE_BASE}/dataease; docker-compose ${compose_files} down -v ${target}
+   cd ${DE_BASE}/dataease; ${compose_cmd} ${compose_files} down -v ${target}
 }
 function version() {
    echo

@@ -224,7 +224,7 @@ else
 fi
 
 ##Install Latest Stable Docker Compose Release
-docker-compose version >/dev/null
+docker-compose version >/dev/null || docker compose version
 if [ $? -ne 0 ]; then
    if [[ -d docker ]]; then
       log "... 离线安装 docker-compose"
