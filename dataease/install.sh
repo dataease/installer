@@ -185,7 +185,7 @@ fi
 
 #Install docker & docker-compose
 ##Install Latest Stable Docker Release
-if which docker >/dev/null; then
+if which docker >/dev/null 2>&1; then
    log "检测到 Docker 已安装，跳过安装步骤"
    log "启动 Docker "
    service docker start 2>&1 | tee -a ${CURRENT_DIR}/install.log
@@ -214,7 +214,7 @@ else
       mkdir -p "$docker_config_folder"
    fi
 
-   docker version >/dev/null
+   docker version >/dev/null 2>&1
    if [ $? -ne 0 ]; then
       log "docker 安装失败"
       exit 1
@@ -224,7 +224,7 @@ else
 fi
 
 ##Install Latest Stable Docker Compose Release
-docker-compose version >/dev/null || docker compose version
+docker-compose version >/dev/null 2>&1 || docker compose version >/dev/null 2>&1
 if [ $? -ne 0 ]; then
    if [[ -d docker ]]; then
       log "... 离线安装 docker-compose"
