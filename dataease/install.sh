@@ -81,7 +81,9 @@ echo -e "*******************************************************\n" 2>&1 | tee -
 
 if [[ -f $dataease_conf ]]; then
    DE_LOGIN_TIMEOUT=$(prop $dataease_conf dataease.login_timeout)
+   DE_MYSQL_PARAMS=$(grep -P "^\s*[^#]?spring.datasource.url=.*$" $dataease_conf | cut -d'=' --complement -f1 | awk -F'?' '{print $2}')
 fi
+export DE_MYSQL_PARAMS
 export DE_LOGIN_TIMEOUT=$([[ -z $DE_LOGIN_TIMEOUT ]] && echo -n 480 || echo -n $DE_LOGIN_TIMEOUT)
 
 if [[ -f $dataease_conf ]] && [[ ! ${DE_EXTERNAL_DORIS} ]]; then
@@ -172,7 +174,7 @@ cd ${CURRENT_DIR}
 sed -i -e "s#DE_BASE=.*#DE_BASE=${DE_BASE}#g" dectl
 \cp dectl /usr/local/bin && chmod +x /usr/local/bin/dectl
 if [ ! -f /usr/bin/dectl ]; then
-  ln -s /usr/local/bin/dectl /usr/bin/dectl 2>/dev/null
+   ln -s /usr/local/bin/dectl /usr/bin/dectl 2>/dev/null
 fi
 
 echo "time: $(date)"
@@ -224,21 +226,27 @@ else
 fi
 
 ##Install Latest Stable Docker Compose Release
-docker-compose version >/dev/null 2>&1 || docker compose version >/dev/null 2>&1
+docker-compose version >/dev/null 2>&1
 if [ $? -ne 0 ]; then
-   if [[ -d docker ]]; then
-      log "... 离线安装 docker-compose"
-      cp docker/bin/docker-compose /usr/bin/
+   docker compose version >/dev/null 2>&1
+   if [ $? -eq 0 ]; then
+      echo 'docker compose "$@"' > /usr/bin/docker-compose
       chmod +x /usr/bin/docker-compose
    else
-      log "... 在线安装 docker-compose"
-      curl -L https://resource.fit2cloud.com/docker/compose/releases/download/v2.16.0/docker-compose-$(uname -s | tr A-Z a-z)-$(uname -m) -o /usr/local/bin/docker-compose 2>&1 | tee -a ${CURRENT_DIR}/install.log
-      if [[ ! -f /usr/local/bin/docker-compose ]];then
-         log "docker-compose 下载失败，请稍候重试"
-         exit 1
+      if [[ -d docker ]]; then
+         log "... 离线安装 docker-compose"
+         cp docker/bin/docker-compose /usr/bin/
+         chmod +x /usr/bin/docker-compose
+      else
+         log "... 在线安装 docker-compose"
+         curl -L https://resource.fit2cloud.com/docker/compose/releases/download/v2.16.0/docker-compose-$(uname -s | tr A-Z a-z)-$(uname -m) -o /usr/local/bin/docker-compose 2>&1 | tee -a ${CURRENT_DIR}/install.log
+         if [[ ! -f /usr/local/bin/docker-compose ]];then
+            log "docker-compose 下载失败，请稍候重试"
+            exit 1
+         fi
+         chmod +x /usr/local/bin/docker-compose
+         ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose
       fi
-      chmod +x /usr/local/bin/docker-compose
-      ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose
    fi
 
    docker-compose version >/dev/null
