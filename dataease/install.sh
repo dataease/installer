@@ -125,6 +125,14 @@ fi
 
 echo -e "======================= 开始安装 =======================" 2>&1 | tee -a ${CURRENT_DIR}/install.log
 
+keep_doris="false"
+fe_data_path="${DE_RUN_BASE}/data/fe"
+if [ -d ${fe_data_path} ] && [ ! -z "$(ls -A $fe_data_path)" ]; then
+   echo "不升级doris，备份 docker-compose-doris.yml 文件"
+   keep_doris="true"
+   \cp ${DE_RUN_BASE}/docker-compose-doris.yml ${DE_RUN_BASE}/docker-compose-doris.yml.bak
+fi
+
 mkdir -p ${DE_RUN_BASE}
 cp -r ./dataease/* ${DE_RUN_BASE}/
 
@@ -139,6 +147,11 @@ mkdir -p ${DE_RUN_BASE}/data/mysql
 mkdir -p ${DE_RUN_BASE}/data/static-resource
 mkdir -p ${DE_RUN_BASE}/custom-drivers
 mkdir -p ${DE_RUN_BASE}/data/business
+
+
+if [ ${keep_doris} = "true" ]; then
+   \mv ${DE_RUN_BASE}/docker-compose-doris.yml.bak ${DE_RUN_BASE}/docker-compose-doris.yml
+fi
 
 DE_MYSQL_HOST_ORIGIN=$DE_MYSQL_HOST
 DE_MYSQL_PORT_ORIGIN=$DE_MYSQL_PORT
