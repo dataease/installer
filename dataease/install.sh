@@ -126,11 +126,13 @@ fi
 echo -e "======================= 开始安装 =======================" 2>&1 | tee -a ${CURRENT_DIR}/install.log
 
 keep_doris="false"
-fe_data_path="${DE_RUN_BASE}/data/fe"
-if [ -d ${fe_data_path} ] && [ ! -z "$(ls -A $fe_data_path)" ]; then
-   echo "不升级doris，备份 docker-compose-doris.yml 文件"
-   keep_doris="true"
-   \cp ${DE_RUN_BASE}/docker-compose-doris.yml ${DE_RUN_BASE}/docker-compose-doris.yml.bak
+if [[ -f ${DE_RUN_BASE}/docker-compose-doris.yml ]]; then
+   current_doris_version=$(grep '^    image:' ${DE_RUN_BASE}/docker-compose-doris.yml | head -1 | cut -d ':' -f3)
+   if [[ ! $current_doris_version =~ "v1.2.4" ]]; then
+      echo "不升级doris，备份 docker-compose-doris.yml 文件"
+      keep_doris="true"
+      \cp ${DE_RUN_BASE}/docker-compose-doris.yml ${DE_RUN_BASE}/docker-compose-doris.yml.bak
+   fi
 fi
 
 mkdir -p ${DE_RUN_BASE}
