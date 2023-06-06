@@ -2,7 +2,7 @@ version: '2.1'
 services:
 
   doris-fe:
-    image: registry.cn-qingdao.aliyuncs.com/dataease/doris:v1.2.4.1
+    image: registry.cn-qingdao.aliyuncs.com/dataease/doris:v1.2.4.1-0606
     container_name: doris-fe
     privileged: true
     environment:
@@ -24,7 +24,7 @@ services:
       retries: 3
 
   doris-be:
-    image: registry.cn-qingdao.aliyuncs.com/dataease/doris:v1.2.4.1
+    image: registry.cn-qingdao.aliyuncs.com/dataease/doris:v1.2.4.1-0606
     container_name: doris-be
     privileged: true
     environment:
