@@ -35,7 +35,8 @@ set +a
 
 read available_disk <<< $(df -H --output=avail ${DE_BASE} | tail -1)
 available_disk=${available_disk%?}
-if [[ $available_disk < 20.0 ]];then
+available_disk=${available_disk%.*}
+if [[ $available_disk -lt 20 ]];then
    log "\033[31m[警告] DataEase 运行目录所在磁盘剩余空间不足 20G 可能无法正常启动!\033[0m"
 fi
 
