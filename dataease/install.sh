@@ -168,8 +168,10 @@ else
    sed -i -e "/^    depends_on/,+2d" docker-compose.yml
 fi
 
-
 log "拷贝配置文件模板文件  -> $conf_folder"
+if [[ -f $dataease_conf ]]; then
+   grep "redis" $dataease_conf >> $templates_folder/dataease.properties
+fi
 cd $DE_RUN_BASE
 cp -r $templates_folder/* $conf_folder
 cp -r $templates_folder/.kettle $conf_folder
