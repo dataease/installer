@@ -33,13 +33,6 @@ else
 fi
 set +a
 
-read available_disk <<< $(df -H --output=avail ${DE_BASE} | tail -1)
-available_disk=${available_disk%?}
-available_disk=${available_disk%.*}
-if [[ $available_disk -lt 20 ]];then
-   log "\033[31m[警告] DataEase 运行目录所在磁盘剩余空间不足 20G 可能无法正常启动!\033[0m"
-fi
-
 DE_RUN_BASE=$DE_BASE/dataease
 conf_folder=${DE_RUN_BASE}/conf
 templates_folder=${DE_RUN_BASE}/templates
@@ -137,6 +130,14 @@ if [[ -f ${DE_RUN_BASE}/docker-compose-doris.yml ]]; then
 fi
 
 mkdir -p ${DE_RUN_BASE}
+
+read available_disk <<< $(df -H --output=avail ${DE_RUN_BASE} | tail -1)
+available_disk=${available_disk%?}
+available_disk=${available_disk%.*}
+if [[ $available_disk -lt 20 ]];then
+   log "\033[31m[警告] DataEase 运行目录所在磁盘剩余空间不足 20G 可能无法正常启动!\033[0m"
+fi
+
 cp -r ./dataease/* ${DE_RUN_BASE}/
 
 cd $DE_RUN_BASE
